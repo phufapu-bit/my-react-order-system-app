@@ -1,0 +1,105 @@
+/* =========================
+   Root variables
+========================= */
+:root {
+  font-family: 'Kanit', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* Light mode */
+  --bg-color: #f4f7fa;
+  --text-color: #2e3a4e;
+
+  /* Dark mode */
+  --bg-color-dark: #1f1f1f;
+  --text-color-dark: #e0e0e0;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================
+   Global body/html
+========================= */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* React root ยืดเต็มเพื่อดัน Footer */
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* =========================
+   App layout
+========================= */
+.app-container {
+  display: flex;
+  flex: 1;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease;
+}
+
+/* =========================
+   Footer
+========================= */
+footer {
+  margin-top: auto;
+  padding: 15px;
+  background-color: #15458f;
+  color: white;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* =========================
+   Sidebar toggle (ตัวอย่าง)
+========================= */
+.sidebar {
+  width: 200px;
+  transition: transform 0.3s ease;
+}
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+/* =========================
+   Dark mode
+========================= */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--bg-color-white);
+    color: var(--text-color-dark);
+  }
+
+  footer {
+    background-color: #15458f;
+    color: #e0e0e0;
+  }
+}
+
+/* =========================
+   Container spacing
+========================= */
+.container {
+  flex: 1;
+}
