@@ -1,6 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./Navbar.css";
+import LogoIcon from "../assets/images/checkout (1).png"
+import HomeIcon from "../assets/images/home.png"
+import OrderIcon from "../assets/images/checklist.png"
+import MenuIcon from "../assets/images/bar.png"
+import ResultIcon from "../assets/images/results.png"
+import UserIcon from "../assets/images/man.png"
 
 export default function Sidebar({ isOpen }) {
   const ROLE = localStorage.getItem("role");
@@ -16,7 +22,7 @@ export default function Sidebar({ isOpen }) {
     >
       <h2 className="mb-4 fw-bold">
         <img
-          src="src\assets\images\checkout (1).png"
+          src={LogoIcon}
           alt="Logo"
           style={{
             width: "55px",
@@ -37,7 +43,7 @@ export default function Sidebar({ isOpen }) {
             }}
           >
             <img
-              src="src\assets\images\home.png"
+              src={HomeIcon}
               alt="Home"
               style={{
                 width: "30px",
@@ -58,7 +64,7 @@ export default function Sidebar({ isOpen }) {
             }}
           >
             <img
-              src="src\assets\images\checklist.png"
+              src={OrderIcon}
               alt="Order"
               style={{
                 width: "30px",
@@ -79,7 +85,7 @@ export default function Sidebar({ isOpen }) {
             }}
           >
             <img
-              src="src\assets\images\bar.png"
+              src={MenuIcon}
               alt="Menu"
               style={{
                 width: "30px",
@@ -102,7 +108,7 @@ export default function Sidebar({ isOpen }) {
                 }}
               >
                 <img
-                  src="src\assets\images\results.png"
+                  src={ResultIcon}
                   alt="Result"
                   style={{
                     width: "30px",
@@ -124,7 +130,7 @@ export default function Sidebar({ isOpen }) {
                 }}
               >
                 <img
-                  src="src\assets\images\man.png"
+                  src={UserIcon}
                   alt="Result"
                   style={{
                     width: "30px",
