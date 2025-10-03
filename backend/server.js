@@ -9,7 +9,7 @@ const app = express();
 const PORT = 3001;
 
 // URL ของ Frontend (Production Domain จาก Vercel)
-const allowedOrigin = "https://my-react-order-system-app.vercel.app"; // <--- Domain ของคุณ
+const allowedOrigin = "https://my-react-order-system-app-git-main-pufas-projects.vercel.app/login"; // <--- Domain ของคุณ
 
 const corsOptions = {
   origin: allowedOrigin,
