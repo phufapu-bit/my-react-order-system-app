@@ -12,12 +12,19 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Database connection using async/await
+// const db = mysql.createPool({
+//   // เปลี่ยนเป็น pool เพื่อประสิทธิภาพที่ดีกว่า
+//   host: "localhost",
+//   user: "root",
+//   password: "root",
+//   database: "testdb",
+// });
+
 const db = mysql.createPool({
-  // เปลี่ยนเป็น pool เพื่อประสิทธิภาพที่ดีกว่า
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "testdb",
+  host: process.env.DB_HOST, // อ่านค่าจากตัวแปร DB_HOST ที่ตั้งใน Railway
+  user: process.env.DB_USER, // อ่านค่าจากตัวแปร DB_USER
+  password: process.env.DB_PASSWORD, // อ่านค่าจากตัวแปร DB_PASSWORD
+  database: process.env.DB_DATABASE, // อ่านค่าจากตัวแปร DB_DATABASE
 });
 
 // Start the server only after a successful database connection
