@@ -30,7 +30,7 @@ export default function Resultpage() {
   const fetchSalesSummary = async () => {
     try {
       // "http://localhost:3001/api/getSalesSummary"
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getSalesSummary`);
+      const res = await axios.post(`${import.meta.env.VITE_APP_API_URL}/api/getSalesSummary`);
       if (res.data.success) {
         setTotalSales(res.data.totalSales || 0);
         setTodayOrders(res.data.todayOrders || 0);
@@ -46,7 +46,7 @@ export default function Resultpage() {
     try {
       // "http://localhost:3001/api/getPendingOrderCount"
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/getPendingOrderCount`
+        `${import.meta.env.VITE_APP_API_URL}/api/getPendingOrderCount`
       );
       if (res.data.success) {
         // ต้องแน่ใจว่า Backend ส่ง pendingCount กลับมา
@@ -61,7 +61,7 @@ export default function Resultpage() {
   const fetchSalesData = async () => {
     try {
       // "http://localhost:3001/api/getDailySales"
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getDailySales`);
+      const res = await axios.post(`${import.meta.env.VITE_APP_API_URL}/api/getDailySales`);
       if (res.data.success) {
         setSalesData(res.data.salesData); 
       }

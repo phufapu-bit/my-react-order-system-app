@@ -17,7 +17,7 @@ export default function Menupage() {
   const getMenuList = async () => {
     // "http://localhost:3001/api/getmenu"
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getmenu`);
+      const res = await axios.post(`${import.meta.env.VITE_APP_API_URL}/api/getmenu`);
       if (res.data.success) {
         setMenuList(res.data.menu);
       }
@@ -41,7 +41,7 @@ export default function Menupage() {
         });
       }
       // "http://localhost:3001/api/addmenu"
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/addmenu`, {
+      await axios.post(`${import.meta.env.VITE_APP_API_URL}/api/addmenu`, {
         menuname,
         price,
       });
@@ -84,7 +84,7 @@ export default function Menupage() {
       if (result.isConfirmed) {
         // "http://localhost:3001/api/updatemenu"
         try {
-          await axios.patch(`${process.env.REACT_APP_API_URL}/api/updatemenu`, {
+          await axios.patch(`${import.meta.env.VITE_APP_API_URL}/api/updatemenu`, {
             id,
             menuname,
             price,
@@ -121,7 +121,7 @@ export default function Menupage() {
       if (result.isConfirmed) {
         try {
           // `http://localhost:3001/api/deletemenu/${id}`
-          await axios.delete(`${process.env.REACT_APP_API_URL}/api/deletemenu/${id}`);
+          await axios.delete(`${import.meta.env.VITE_APP_API_URL}/api/deletemenu/${id}`);
           setMenuList(menuList.filter((menu) => menu.id !== id));
           Swal.fire({
             icon: "success",

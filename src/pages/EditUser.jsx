@@ -24,7 +24,7 @@ export default function EditUserpage() {
     try {
       // "http://localhost:3001/api/getuser"
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/getuser`
+        `${import.meta.env.VITE_APP_API_URL}/api/getuser`
       );
       if (res.data.success && Array.isArray(res.data.users)) {
         setUsers(res.data.users);
@@ -95,7 +95,7 @@ export default function EditUserpage() {
     try {
       // `http://localhost:3001/api/updateProfileByAdmin/${oldName}`
       const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}/api/updateProfileByAdmin/${oldName}`,
+        `${import.meta.env.VITE_APP_API_URL}/api/updateProfileByAdmin/${oldName}`,
         {
           newName: editName,
           newPassword: editPassword,
@@ -135,7 +135,7 @@ export default function EditUserpage() {
         try {
           // `http://localhost:3001/api/deleteuser/${id}`
           const res = await axios.delete(
-            `${process.env.REACT_APP_API_URL}/api/deleteuser/${id}`
+            `${import.meta.env.VITE_APP_API_URL}/api/deleteuser/${id}`
           );
           if (res.data.success) {
             Swal.fire("ลบสำเร็จ!", res.data.message, "success");
