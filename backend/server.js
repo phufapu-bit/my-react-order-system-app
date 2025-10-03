@@ -8,7 +8,16 @@ const saltRounds = 10;
 const app = express();
 const PORT = 3001;
 
-app.use(cors());
+// URL ของ Frontend (Production Domain จาก Vercel)
+const allowedOrigin = "https://my-react-order-system-app.vercel.app"; // <--- Domain ของคุณ
+
+const corsOptions = {
+  origin: allowedOrigin,
+  // อนุญาตให้ส่ง Credentials (เช่น Cookies, Authorization Headers) ซึ่งจำเป็นสำหรับระบบ Login/JWT
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Database connection using async/await
