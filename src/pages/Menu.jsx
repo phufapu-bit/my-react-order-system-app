@@ -5,13 +5,15 @@ import axios from "axios";
 import "../App.css";
 
 export default function Menupage() {
-  const [menuList, setMenuList] = useState([]);
   const [menuname, setMenuname] = useState("");
   const [price, setPrice] = useState("");
+
+  const [menuList, setMenuList] = useState([]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [id, setId] = useState(null);
 
-  // Function to fetch the menu list from the backend
+  // ฟังก์ชันดึงเมนู
   const getMenuList = async () => {
     try {
       const res = await axios.post("http://localhost:3001/api/getmenu");
@@ -28,7 +30,7 @@ export default function Menupage() {
     }
   };
 
-  // Function to handle adding a new menu item
+  // ฟังก์เพิ่มเมนู
   const handleAddMenu = async () => {
     try {
       if (!menuname || !price) {
@@ -61,7 +63,7 @@ export default function Menupage() {
     }
   };
 
-  // Function to prepare the form for editing
+  // ปุ่มการอัพเดต
   const handleEdit = (menu) => {
     setId(menu.id);
     setMenuname(menu.ordername);
@@ -69,7 +71,7 @@ export default function Menupage() {
     setIsEditing(true);
   };
 
-  // Function to handle updating a menu item
+  // ฟังก์ชันการแก้ไข
   const handleUpdate = async () => {
     Swal.fire({
       title: "คุณต้องการแก้ไขเมนูนี้ใช่ไหม?",
@@ -105,7 +107,7 @@ export default function Menupage() {
     });
   };
 
-  // Function to handle deleting a menu item
+  // ฟังก์การลบ
   const handleDelete = (id) => {
     Swal.fire({
       title: "คุณต้องการลบเมนูนี้หรือไม่?",
@@ -135,7 +137,7 @@ export default function Menupage() {
     });
   };
 
-  // Function to reset the form fields
+  // การรีเชตค่า
   const resetForm = () => {
     setMenuname("");
     setPrice("");
@@ -143,7 +145,7 @@ export default function Menupage() {
     setIsEditing(false);
   };
 
-  // Fetch menu data on component mount
+  // การดึงข้อมูล
   useEffect(() => {
     getMenuList();
   }, []);

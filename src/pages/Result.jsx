@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // อย่าลืม import axios
+import axios from "axios"; 
 import "../App.css";
 import {
   LineChart,
@@ -17,22 +17,20 @@ import {
 } from "recharts";
 
 export default function Resultpage() {
-  // **State สำหรับข้อมูล Dashboard**
-  const [salesData, setSalesData] = useState([]); // สำหรับกราฟ
-  const [todayOrders, setTodayOrders] = useState(0); // Card: ออเดอร์วันนี้
-  const [totalSales, setTotalSales] = useState(0); // Card: ยอดขายรวม
-  const [pendingCount, setPendingCount] = useState(0); // Card: กำลังทำอาหาร
+  const [salesData, setSalesData] = useState([]); 
+  const [todayOrders, setTodayOrders] = useState(0);
+  const [totalSales, setTotalSales] = useState(0); 
+  const [pendingCount, setPendingCount] = useState(0); 
   const [todaySalesAmount, setTodaySalesAmount] = useState(0);
   const [chartType, setChartType] = useState("line");
 
-  // --- ฟังก์ชันดึงข้อมูลจาก API ---
 
-  // 1. ดึงยอดขายรวมและออเดอร์วันนี้
+
+  //  ดึงยอดขายรวมและออเดอร์วันนี้
   const fetchSalesSummary = async () => {
     try {
       const res = await axios.post("http://localhost:3001/api/getSalesSummary");
       if (res.data.success) {
-        // ต้องแน่ใจว่า Backend ส่ง totalSales และ todayOrders กลับมา
         setTotalSales(res.data.totalSales || 0);
         setTodayOrders(res.data.todayOrders || 0);
         setTodaySalesAmount(res.data.todaySalesAmount || 0);
@@ -42,7 +40,7 @@ export default function Resultpage() {
     }
   };
 
-  // 2. ดึงจำนวนออเดอร์กำลังทำ
+  //  ดึงจำนวนออเดอร์กำลังทำ
   const fetchPendingCount = async () => {
     try {
       const res = await axios.post(
@@ -57,12 +55,12 @@ export default function Resultpage() {
     }
   };
 
-  // 3. ดึงข้อมูลยอดขายรายวันสำหรับกราฟ (สมมติว่ามี API นี้)
+  // ดึงข้อมูลยอดขายรายวันสำหรับกราฟ (สมมติว่ามี API นี้)
   const fetchSalesData = async () => {
     try {
       const res = await axios.post("http://localhost:3001/api/getDailySales");
       if (res.data.success) {
-        setSalesData(res.data.salesData); // คาดหวังรูปแบบ: [{ day: 'Mon', sales: 1000 }, ...]
+        setSalesData(res.data.salesData); 
       }
     } catch (error) {
       console.error("Error fetching sales data:", error);
@@ -92,12 +90,11 @@ export default function Resultpage() {
       fetchSalesData();
     }, 2000);
 
-    return () => clearInterval(interval); // Clear interval เมื่อ Component ถูกถอดออก
+    return () => clearInterval(interval); 
   }, []);
 
-  // function render chart ตามชนิด (ใช้ logic เดิม)
+  // function render chart ตามชนิด 
   const renderChart = () => {
-    // ใช้ logic เดิมจากโค้ดของคุณ โดยใช้ salesData ที่ดึงมาจาก State
     switch (chartType) {
       case "line":
         return (
@@ -247,7 +244,7 @@ export default function Resultpage() {
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              // 🟠 โทนส้ม
+              // โทนส้ม
               background: "linear-gradient(135deg, #FFF0E6, #ffffff)",
               borderLeft: "5px solid #ff7f27", // เพิ่มแถบสีด้านซ้าย
             }}
@@ -281,7 +278,7 @@ export default function Resultpage() {
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              // 🟢 โทนเขียว/เหลือง
+              // โทนเขียว/เหลือง
               background: "linear-gradient(135deg, #ECF9E3, #ffffff)",
               borderLeft: "5px solid #2e5d4f",
             }}
@@ -319,7 +316,7 @@ export default function Resultpage() {
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              // 🟣 โทนม่วง
+              //  โทนม่วง
               background: "linear-gradient(135deg, #EBE6FF, #ffffff)",
               borderLeft: "5px solid #4b3f72",
             }}
@@ -357,7 +354,7 @@ export default function Resultpage() {
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              // 🔵 โทนฟ้า
+              //  โทนฟ้า
               background: "linear-gradient(135deg, #E6F7FF, #ffffff)",
               borderLeft: "5px solid #3b8ca7",
             }}

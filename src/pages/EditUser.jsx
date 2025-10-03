@@ -6,10 +6,12 @@ import Select from "react-select";
 import "../App.css";
 
 export default function EditUserpage() {
-  const [users, setUsers] = useState([]);
-  const [editingUser, setEditingUser] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPassword, setEditPassword] = useState("");
+
+  const [users, setUsers] = useState([]);
+
+  const [editingUser, setEditingUser] = useState(null);
   const [editRole, setEditRole] = useState(null);
 
   const roleOptions = [
@@ -17,8 +19,8 @@ export default function EditUserpage() {
     { value: "admin", label: "ผู้ดูแลระบบ" },
   ];
 
+  //ฟังก์ดึงชื่อผู้ใช้งาน
   const getuser = async () => {
-    // ... (ฟังก์ชัน getuser เดิม)
     try {
       const res = await axios.post("http://localhost:3001/api/getuser");
       if (res.data.success && Array.isArray(res.data.users)) {
@@ -41,22 +43,19 @@ export default function EditUserpage() {
     getuser();
   }, []);
 
-  // ------------------------------------
   // --- ฟังก์ชันสำหรับจัดการการแก้ไข Modal ---
-  // ------------------------------------
-
   const closeEditModal = () => {
-    // 1. ซ่อน Modal ผ่าน Bootstrap JS
+    //ซ่อน Modal ผ่าน Bootstrap JS
     const modalElement = document.getElementById("editUserModal");
     const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
     if (modalInstance) {
       modalInstance.hide();
     }
-    // 2. ล้าง State เพื่อปิด Modal Logic
+    //ล้าง State เพื่อปิด Modal Logic
     setEditingUser(null);
   };
 
-  // 1. เปิด Modal และกำหนดค่าเริ่มต้น
+  //เปิด Modal และกำหนดค่าเริ่มต้น
   const handleEdit = (user) => {
     setEditingUser(user);
     setEditName(user.name);
@@ -64,21 +63,18 @@ export default function EditUserpage() {
     const currentRole = roleOptions.find((opt) => opt.value === user.role);
     setEditRole(currentRole || null);
 
-    // 3. แสดง Modal ผ่าน Bootstrap JS
-    // ใช้ setTimeout เพื่อให้ React State อัปเดตเสร็จก่อน Bootstrap JS จะทำงาน
+    //แสดง Modal ผ่าน Bootstrap JS
     setTimeout(() => {
       const modalElement = document.getElementById("editUserModal");
-      // ถ้า Modal ถูกสร้างแล้ว ให้ใช้ getInstance
       let modalInstance = window.bootstrap.Modal.getInstance(modalElement);
       if (!modalInstance) {
-        // ถ้ายังไม่ถูกสร้าง ให้สร้างใหม่
         modalInstance = new window.bootstrap.Modal(modalElement);
       }
       modalInstance.show();
     }, 100);
   };
 
-  // 2. ส่งข้อมูลการแก้ไขไปยัง Backend
+  //ส่งข้อมูลการแก้ไขไปยัง Backend
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!editingUser) return;
@@ -119,11 +115,8 @@ export default function EditUserpage() {
     }
   };
 
-  // ----------------------------------
   // --- ฟังก์ชันสำหรับการลบผู้ใช้ ---
-  // ----------------------------------
   const handleDelete = async (id, name) => {
-    // ... (ฟังก์ชัน handleDelete เดิม)
     Swal.fire({
       title: `ต้องการลบผู้ใช้ ${name} ใช่หรือไม่?`,
       text: "คุณจะไม่สามารถกู้คืนได้!",
@@ -152,13 +145,9 @@ export default function EditUserpage() {
     });
   };
 
-  // ----------------------------------
-  // --- ส่วนแสดงผล (Return JSX) ---
-  // ----------------------------------
-
   return (
     <div className="container-fluid">
-      {/* ... ส่วน Breadcrumb และ Header ... */}
+      {/* ส่วน Breadcrumb และ Header */}
       <nav
         aria-label="breadcrumb"
         style={{ fontSize: "18px", fontFamily: "'Kanit', sans-serif" }}
@@ -186,7 +175,7 @@ export default function EditUserpage() {
         จัดการผู้ใช้
       </h1>
 
-      {/* ... ส่วนตารางแสดงข้อมูล ... */}
+      {/* ส่วนตารางแสดงข้อมูล */}
       <div className="card shadow">
         <div
           className="card-body"
@@ -199,11 +188,9 @@ export default function EditUserpage() {
             >
               <thead className="table">
                 <tr>
-                  {/* <th>ID</th> */}
                   <th>ชื่อ</th>
                   <th>บทบาท</th>
                   <th>รหัสผ่าน</th>
-                  {/* (Hash) */}
                   <th>การจัดการ</th>
                 </tr>
               </thead>
@@ -256,11 +243,8 @@ export default function EditUserpage() {
         </div>
       </div>
 
-      {/* ------------------------------------ */}
-      {/* *** MODAL สำหรับแก้ไขผู้ใช้ *** */}
-      {/* ------------------------------------ */}
+      {/* MODAL สำหรับแก้ไขผู้ใช้  */}
       <div
-        // ลบคลาส 'fade' ออกไปก่อน ถ้า Bootstrap CSS/JS มีปัญหาเรื่อง Transition
         className="modal"
         id="editUserModal"
         tabIndex="-1"
@@ -270,12 +254,9 @@ export default function EditUserpage() {
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header bg-primary text-white">
-              {" "}
-              {/* <--- ปรับพื้นหลังหัว Modal เป็นสีน้ำเงิน (Primary) และตัวอักษรเป็นสีขาว (White) */}
               <h5
                 className="modal-title"
                 id="editUserModalLabel"
-                // เพิ่ม Style เพื่อเน้นให้ชัดเจนยิ่งขึ้น
                 style={{ fontWeight: "600" }}
               >
                 แก้ไขผู้ใช้: {editingUser ? editingUser.name : ""}
@@ -296,8 +277,7 @@ export default function EditUserpage() {
                 <div className="mb-3">
                   <label className="form-label text-dark fw-bold">
                     ชื่อผู้ใช้ใหม่
-                  </label>{" "}
-                  {/* <--- เน้น label */}
+                  </label>
                   <input
                     type="text"
                     className="form-control"
@@ -309,8 +289,7 @@ export default function EditUserpage() {
                 <div className="mb-3">
                   <label className="form-label text-dark fw-bold">
                     รหัสผ่านใหม่
-                  </label>{" "}
-                  {/* <--- เน้น label */}
+                  </label>
                   <input
                     type="password"
                     className="form-control"
@@ -322,13 +301,42 @@ export default function EditUserpage() {
                 <div className="mb-3">
                   <label className="form-label text-dark fw-bold">
                     บทบาทใหม่
-                  </label>{" "}
-                  {/* <--- เน้น label */}
+                  </label>
                   <Select
                     options={roleOptions}
                     value={editRole}
                     onChange={setEditRole}
                     placeholder="เลือกบทบาท"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "16px", // ปรับสีตัวหนังสือพื้นฐานของ control
+                        color: "#333", // สีเทาเข้ม
+                      }),
+                      singleValue: (base) => ({
+                        ...base, // ✅ ทำให้ตัวหนังสือของค่าที่เลือกเข้มขึ้น
+                        color: "#333", // สีเทาเข้ม
+                        fontWeight: "500", // เพิ่มความหนา
+                        fontSize: "18px", // เพิ่มขนาดเล็กน้อยให้ดูเด่น
+                      }),
+                      placeholder: (base) => ({
+                        ...base, // ✅ ทำให้ตัวหนังสือ placeholder เข้มขึ้น
+                        color: "#666", // สีเทาปานกลาง
+                        fontSize: "18px", // เพิ่มขนาดเล็กน้อย
+                      }),
+                      option: (base, state) => ({
+                        ...base, // ✅ สีตัวหนังสือในตัวเลือก
+                        color: "#333", // สีเทาเข้ม
+                        fontSize: "16px", // ปรับสีพื้นหลังเมื่อ Hover หรือ Selected
+                        backgroundColor: state.isSelected
+                          ? "#e0e0e0"
+                          : state.isFocused
+                          ? "#f0f0f0"
+                          : null,
+                      }),
+                      // หากต้องการให้ Dropdown แสดงผลอยู่ด้านหน้าเสมอ (แก้ปัญหาเรื่อง z-index)
+                      menu: (base) => ({ ...base, zIndex: 2000 }),
+                    }}
                   />
                 </div>
               </div>
@@ -342,8 +350,6 @@ export default function EditUserpage() {
                   ยกเลิก
                 </button>
                 <button type="submit" className="btn btn-success">
-                  {" "}
-                  {/* <--- เปลี่ยนเป็นสีเขียว (Success) เพื่อสื่อถึงการยืนยัน */}
                   บันทึกการแก้ไข
                 </button>
               </div>
@@ -351,7 +357,6 @@ export default function EditUserpage() {
           </div>
         </div>
       </div>
-      {/* ------------------------------------ */}
     </div>
   );
 }

@@ -7,31 +7,17 @@ import "../App.css";
 
 export default function Orderpage() {
   const [tablenum, setTablenum] = useState("");
-  const [listorder, setListorder] = useState(null);
-  const [qty, setQty] = useState(1);
-  const [id, setId] = useState(null); // เก็บ id ที่กำลังแก้ไข
-  const [orders, setOrders] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
 
+  const [orders, setOrders] = useState([]);
   const [menuOptions, setMenuOptions] = useState([]);
   const [menuList, setMenuList] = useState([]);
 
-  // const fetchMenuData = async () => {
-  //   try {
-  //     // Your API is a POST request, so use axios.post
-  //     const res = await axios.post("http://localhost:3001/api/getmenu");
-  //     if (res.data.success) {
-  //       // Map the API results to the format for React Select
-  //       const options = res.data.menu.map((item) => ({
-  //         value: item.ordername, // Use 'ordername' as the value
-  //         label: item.ordername, // Use 'ordername' as the label
-  //       }));
-  //       setMenuOptions(options);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching menu data:", error);
-  //   }
-  // };
+  const [listorder, setListorder] = useState(null);
+  const [id, setId] = useState(null);
+  
+  const [qty, setQty] = useState(1);
+
+  const [isEditing, setIsEditing] = useState(false);
 
   const fetchMenuData = async () => {
     try {
@@ -68,7 +54,6 @@ export default function Orderpage() {
   const handleAdd = async () => {
     try {
       if (!tablenum || !listorder || !qty) {
-        // ตรวจสอบ qty ด้วย
         return Swal.fire({
           icon: "warning",
           title: "กรอกข้อมูลให้ครบ",
@@ -88,20 +73,19 @@ export default function Orderpage() {
         });
       }
 
-      const price = selectedMenuItem.price; // ได้ราคาต่อหน่วยที่ถูกต้อง
+      const price = selectedMenuItem.price;
       const totalPrice = price * qty;
 
       const response = await axios.post("http://localhost:3001/api/order", {
         tablenum,
         listorder: listorder.value,
-        qty: parseInt(qty), // แปลงเป็นตัวเลขเผื่อไว้
+        qty: parseInt(qty),
         price,
         total_price: totalPrice,
       });
 
       if (response.data.success) {
         Swal.fire({
-          // ... (ส่วน Swal.fire เดิม)
           title: "คุณต้องการเพิ่มออเดอร์ใช่ไหม?",
           icon: "question",
           showCancelButton: true,
@@ -118,7 +102,6 @@ export default function Orderpage() {
             setTablenum("");
             setListorder(null);
             setQty(1);
-            // ลบ window.location.reload() ออกเพื่อประสิทธิภาพ
             window.location.reload();
           }
         });
@@ -141,12 +124,9 @@ export default function Orderpage() {
       (option) => option.value === order.listorder
     );
     setListorder(selectedOption);
-    // setListorder(order.listorder);
     setQty(order.qty);
     setIsEditing(true);
   };
-
-  // ใน Orderpage.jsx
 
   // อัปเดตออเดอร์
   const handleUpdate = async () => {
@@ -160,7 +140,7 @@ export default function Orderpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // **ขั้นตอนใหม่: ค้นหาราคาและคำนวณราคารวมใหม่**
+          // **ค้นหาราคาและคำนวณราคารวมใหม่**
           const selectedMenuItem = menuList.find(
             (item) => item.ordername === listorder.value
           );
@@ -178,9 +158,9 @@ export default function Orderpage() {
               id,
               tablenum,
               listorder: listorder.value,
-              qty: parseInt(qty), // แปลงเป็นตัวเลข
+              qty: parseInt(qty),
               price,
-              total_price: totalPrice, // ส่งค่าใหม่ไป Backend
+              total_price: totalPrice,
             }
           );
 
@@ -196,7 +176,6 @@ export default function Orderpage() {
             setListorder(null);
             setQty(1);
             setIsEditing(false);
-            // ลบ window.location.reload() ออก
             window.location.reload();
           }
         } catch (error) {
@@ -253,7 +232,6 @@ export default function Orderpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // เรียกใช้ API ใหม่ที่ Backend
           const response = await axios.patch(
             "http://localhost:3001/api/completeOrder",
             { id }
@@ -264,7 +242,7 @@ export default function Orderpage() {
               title: "ออเดอร์เสร็จสิ้น!",
               timer: 1000,
               showConfirmButton: false,
-            }).then(() => getListorder()); // โหลดรายการใหม่ (ออเดอร์ที่เสร็จแล้วจะหายไป)
+            }).then(() => getListorder());
           }
         } catch (error) {
           Swal.fire({

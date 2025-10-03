@@ -11,7 +11,6 @@ export default function Navbar({ toggleSidebar }) {
 
   const checkLogin = () => {
     const loginState = localStorage.getItem("isLoggedIn") === "true";
-    // const ROLE = localStorage.getItem("role");
     setIsLoggedIn(loginState);
     setUsername(localStorage.getItem("name") || "");
   };

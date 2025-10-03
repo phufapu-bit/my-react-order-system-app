@@ -2,18 +2,16 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
-import "./login.css";
-import Select from "react-select"; // Import React Select
+import Select from "react-select"; 
 
 export default function Login() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState(null); // New state for user role
+  const [role, setRole] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
-  // Define roles for the dropdown menu
   const roleOptions = [
     { value: "user", label: "พนักงาน" },
     { value: "admin", label: "ผู้ดูแลระบบ" },
@@ -46,7 +44,7 @@ export default function Login() {
             localStorage.setItem("isLoggedIn", "true");
             localStorage.setItem("name", name);
             // Save the user's role in localStorage for later use
-            localStorage.setItem("role", response.data.role); 
+            localStorage.setItem("role", response.data.role);
             window.dispatchEvent(new Event("storage"));
 
             Swal.fire({
@@ -71,6 +69,36 @@ export default function Login() {
         text: "ไม่สามารถเชื่อมต่อ Server ได้",
       });
     }
+  };
+
+  //ฟังก์ชันใหม่สำหรับ Guest Login
+  const handleGuestLogin = () => {
+    //ให้สิทธิ์ Guest เป็น 'user' (พนักงาน) เพื่อดูหน้า Order
+    const guestName = "GUEST";
+    const guestRole = "user";
+
+    Swal.fire({
+      title: "เข้าสู่ระบบในฐานะผู้เข้าชม?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "ใช่, เข้าสู่ระบบ",
+      cancelButtonText: "ไม่",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("name", guestName);
+        localStorage.setItem("role", guestRole); // กำหนด role เป็น 'user' สำหรับ Guest
+        window.dispatchEvent(new Event("storage"));
+
+        Swal.fire({
+          icon: "info",
+          title: `ยินดีต้อนรับ ${guestName}!`,
+          text: "คุณกำลังใช้งานในโหมดสาธิต",
+          timer: 1500,
+          showConfirmButton: false,
+        }).then(() => navigate("/"));
+      }
+    });
   };
 
   const handleRegister = async (e) => {
@@ -112,7 +140,8 @@ export default function Login() {
       }
     } catch (error) {
       // ตรวจสอบ error จาก Axios
-      const errorMessage = error.response?.data?.message || "ไม่สามารถเชื่อมต่อ Server ได้";
+      const errorMessage =
+        error.response?.data?.message || "ไม่สามารถเชื่อมต่อ Server ได้";
       Swal.fire({
         icon: "error",
         title: "เกิดข้อผิดพลาด",
@@ -216,7 +245,9 @@ export default function Login() {
 
         {/* ปุ่ม Submit */}
         <button
-          className={`btn ${isRegistering ? "btn-primary" : "btn-success"} mt-4 w-100`}
+          className={`btn ${
+            isRegistering ? "btn-primary" : "btn-success"
+          } mt-4 w-100`}
           onClick={isRegistering ? handleRegister : handleSubmit}
           style={{
             fontFamily: "'Kanit', sans-serif",
@@ -226,6 +257,21 @@ export default function Login() {
         >
           {isRegistering ? "ลงทะเบียน" : "เข้าสู่ระบบ"}
         </button>
+
+        {/* ปุ่ม Guest Login (เฉพาะโหมด Login เท่านั้น) */}
+        {!isRegistering && (
+          <button
+            className="btn btn-warning mt-2 w-100"
+            onClick={handleGuestLogin}
+            style={{
+              fontFamily: "'Kanit', sans-serif",
+              letterSpacing: "0.5px",
+              fontSize: "20px",
+            }}
+          >
+            เข้าสู่ระบบในฐานะ Guest
+          </button>
+        )}
 
         {/* ปุ่มสลับโหมด */}
         <div className="mt-3">
@@ -239,7 +285,9 @@ export default function Login() {
             }}
             style={{ fontFamily: "'Kanit', sans-serif" }}
           >
-            {isRegistering ? "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ" : "ไม่มีบัญชี? ลงทะเบียน"}
+            {isRegistering
+              ? "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ"
+              : "ไม่มีบัญชี? ลงทะเบียน"}
           </button>
         </div>
       </div>

@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom"; // <-- เพิ่ม useLocation
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/sidebar";
 import Home from "./pages/Home";
@@ -9,26 +14,27 @@ import PrivateRoute from "./components/PrivateRoute";
 import Orderpage from "./pages/Order";
 import Footer from "./components/footer";
 import Menupage from "./pages/Menu";
-import EditUserpage from "./pages/EditUser"; 
+import EditUserpage from "./pages/EditUser";
 
-function MainApp() { // เปลี่ยน App component หลักเป็น MainApp
+function MainApp() {
+  // เปลี่ยน App component หลักเป็น MainApp
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation(); // <-- ใช้ useLocation เพื่อดึง Path ปัจจุบัน
-  
+
   // ตรวจสอบว่า Path ปัจจุบันคือ /login หรือไม่
-  const isLoginPage = location.pathname === "/login"; 
-  
+  const isLoginPage = location.pathname === "/login";
+
   // กำหนด margin-left สำหรับ content
-  const contentMargin = isLoginPage ? "0" : (sidebarOpen ? "300px" : "0");
+  const contentMargin = isLoginPage ? "0" : sidebarOpen ? "300px" : "0";
   // กำหนด padding-top สำหรับเนื้อหาหลัก
   const contentPaddingTop = isLoginPage ? "0" : "70px";
 
   return (
-    <> {/* ไม่ใช้ <Router> ที่นี่ เพราะ MainApp ถูกห่อด้วย Router ด้านล่าง */}
-      
+    <>
+      {" "}
+      {/* ไม่ใช้ <Router> ที่นี่ เพราะ MainApp ถูกห่อด้วย Router ด้านล่าง */}
       {/* 1. Sidebar (ซ่อนถ้าเป็นหน้า Login) */}
       {!isLoginPage && <Sidebar isOpen={sidebarOpen} />}
-
       {/* Main content container */}
       <div
         style={{
@@ -40,12 +46,12 @@ function MainApp() { // เปลี่ยน App component หลักเป�
         }}
       >
         {/* 2. Navbar (ซ่อนถ้าเป็นหน้า Login) */}
-        {!isLoginPage && <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />}
+        {!isLoginPage && (
+          <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        )}
 
         {/* ส่วนเนื้อหา */}
-        <div
-          style={{ flex: 1, paddingTop: contentPaddingTop }} // ใช้ paddingTop ที่ปรับตามหน้า Login
-        >
+        <div style={{ flex: 1, paddingTop: contentPaddingTop }}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route
@@ -77,9 +83,7 @@ function MainApp() { // เปลี่ยน App component หลักเป�
             />
           </Routes>
         </div>
-
-        {/* Footer (คุณอาจต้องการซ่อน Footer ในหน้า Login ด้วย) */}
-        {!isLoginPage && <Footer />} 
+        {!isLoginPage && <Footer />}
       </div>
     </>
   );
@@ -87,9 +91,9 @@ function MainApp() { // เปลี่ยน App component หลักเป�
 
 // Component App() เดิม ใช้สำหรับห่อ MainApp ด้วย Router
 export default function App() {
-    return (
-        <Router>
-            <MainApp />
-        </Router>
-    );
+  return (
+    <Router>
+      <MainApp />
+    </Router>
+  );
 }
