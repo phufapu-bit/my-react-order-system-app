@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
-import Select from "react-select"; 
+import Select from "react-select";
 
 export default function Login() {
   const [name, setName] = useState("");
@@ -283,6 +283,7 @@ export default function Login() {
               setPassword("");
               setRole(null);
             }}
+            disabled={true}
             style={{ fontFamily: "'Kanit', sans-serif" }}
           >
             {isRegistering

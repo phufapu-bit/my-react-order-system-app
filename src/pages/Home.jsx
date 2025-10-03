@@ -91,41 +91,39 @@ export default function Homepage() {
         </div>
 
         {/* Card: รายงาน */}
-        {ROLE === "admin" && (
-          <div className="col-md-4 mb-4">
-            <Link to="/resultpage" style={{ textDecoration: "none" }}>
-              <div
-                className="card shadow-lg text-center p-4 h-100"
+        <div className="col-md-4 mb-4">
+          <Link to="/resultpage" style={{ textDecoration: "none" }}>
+            <div
+              className="card shadow-lg text-center p-4 h-100"
+              style={{
+                borderRadius: "20px",
+                transition: "0.3s",
+                background: "linear-gradient(135deg, #d0f0f7, #fff)",
+              }}
+            >
+              <h3
                 style={{
-                  borderRadius: "20px",
-                  transition: "0.3s",
-                  background: "linear-gradient(135deg, #d0f0f7, #fff)",
+                  color: "#3b8ca7",
+                  fontWeight: 700,
+                  fontFamily: "'Kanit', sans-serif",
+                  letterSpacing: "0.5px",
                 }}
               >
-                <h3
-                  style={{
-                    color: "#3b8ca7",
-                    fontWeight: 700,
-                    fontFamily: "'Kanit', sans-serif",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  รายงาน
-                </h3>
-                <p
-                  style={{
-                    fontSize: "1.2rem",
-                    color: "#333",
-                    fontFamily: "'Kanit', sans-serif",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  ดูสรุปยอดขายและข้อมูลร้าน
-                </p>
-              </div>
-            </Link>
-          </div>
-        )}
+                รายงาน
+              </h3>
+              <p
+                style={{
+                  fontSize: "1.2rem",
+                  color: "#333",
+                  fontFamily: "'Kanit', sans-serif",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                ดูสรุปยอดขายและข้อมูลร้าน
+              </p>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   );

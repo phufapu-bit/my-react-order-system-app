@@ -1,12 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./Navbar.css";
-import LogoIcon from "../assets/images/checkout (1).png"
-import HomeIcon from "../assets/images/home.png"
-import OrderIcon from "../assets/images/checklist.png"
-import MenuIcon from "../assets/images/bar.png"
-import ResultIcon from "../assets/images/results.png"
-import UserIcon from "../assets/images/man.png"
+import LogoIcon from "../assets/images/checkout (1).png";
+import HomeIcon from "../assets/images/home.png";
+import OrderIcon from "../assets/images/checklist.png";
+import MenuIcon from "../assets/images/bar.png";
+import ResultIcon from "../assets/images/results.png";
+import UserIcon from "../assets/images/man.png";
 
 export default function Sidebar({ isOpen }) {
   const ROLE = localStorage.getItem("role");
@@ -96,30 +96,29 @@ export default function Sidebar({ isOpen }) {
             จัดการเมนูอาหาร
           </Link>
         </li>
+        <li>
+          <Link
+            to="/resultpage"
+            className="nav-link text-white"
+            style={{
+              fontFamily: "'Kanit', sans-serif",
+              letterSpacing: "0.5px",
+            }}
+          >
+            <img
+              src={ResultIcon}
+              alt="Result"
+              style={{
+                width: "30px",
+                height: "30px",
+                marginRight: "8px",
+              }}
+            />
+            รายงาน
+          </Link>
+        </li>
         {ROLE === "admin" && (
           <>
-            <li>
-              <Link
-                to="/resultpage"
-                className="nav-link text-white"
-                style={{
-                  fontFamily: "'Kanit', sans-serif",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                <img
-                  src={ResultIcon}
-                  alt="Result"
-                  style={{
-                    width: "30px",
-                    height: "30px",
-                    marginRight: "8px",
-                  }}
-                />
-                รายงาน
-              </Link>
-            </li>
-
             <li>
               <Link
                 to="/EditUserpage"
