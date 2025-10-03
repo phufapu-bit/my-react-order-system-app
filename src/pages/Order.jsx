@@ -21,7 +21,8 @@ export default function Orderpage() {
 
   const fetchMenuData = async () => {
     try {
-      const res = await axios.post("http://localhost:3001/api/getmenu");
+      // "http://localhost:3001/api/getmenu"
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getmenu`);
       if (res.data.success) {
         // เก็บรายการเมนูทั้งหมด
         setMenuList(res.data.menu);
@@ -41,7 +42,8 @@ export default function Orderpage() {
   // ดึงข้อมูลออเดอร์
   const getListorder = async () => {
     try {
-      const res = await axios.post("http://localhost:3001/api/getorder");
+      // "http://localhost:3001/api/getorder"
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getorder`);
       if (res.data.success) {
         setOrders(res.data.orders);
       }
@@ -75,8 +77,8 @@ export default function Orderpage() {
 
       const price = selectedMenuItem.price;
       const totalPrice = price * qty;
-
-      const response = await axios.post("http://localhost:3001/api/order", {
+// "http://localhost:3001/api/order"
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/order`, {
         tablenum,
         listorder: listorder.value,
         qty: parseInt(qty),
@@ -152,8 +154,9 @@ export default function Orderpage() {
           const price = selectedMenuItem.price;
           const totalPrice = price * qty;
 
+          // "http://localhost:3001/api/updateOrder"
           const response = await axios.patch(
-            "http://localhost:3001/api/updateOrder",
+            `${process.env.REACT_APP_API_URL}/api/updateOrder`,
             {
               id,
               tablenum,
@@ -201,7 +204,8 @@ export default function Orderpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:3001/api/deleteOrder/${id}`);
+          // `http://localhost:3001/api/deleteOrder/${id}`
+          await axios.delete(`${process.env.REACT_APP_API_URL}/api/deleteOrder/${id}`);
           setOrders(orders.filter((o) => o.id !== id));
           Swal.fire({
             icon: "success",
@@ -232,8 +236,9 @@ export default function Orderpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          // "http://localhost:3001/api/completeOrder"
           const response = await axios.patch(
-            "http://localhost:3001/api/completeOrder",
+            `${process.env.REACT_APP_API_URL}/api/completeOrder`,
             { id }
           );
           if (response.data.success) {

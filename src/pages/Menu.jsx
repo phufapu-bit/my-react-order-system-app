@@ -15,8 +15,9 @@ export default function Menupage() {
 
   // ฟังก์ชันดึงเมนู
   const getMenuList = async () => {
+    // "http://localhost:3001/api/getmenu"
     try {
-      const res = await axios.post("http://localhost:3001/api/getmenu");
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getmenu`);
       if (res.data.success) {
         setMenuList(res.data.menu);
       }
@@ -39,8 +40,8 @@ export default function Menupage() {
           title: "กรอกข้อมูลให้ครบ",
         });
       }
-
-      await axios.post("http://localhost:3001/api/addmenu", {
+      // "http://localhost:3001/api/addmenu"
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/addmenu`, {
         menuname,
         price,
       });
@@ -81,8 +82,9 @@ export default function Menupage() {
       cancelButtonText: "ไม่",
     }).then(async (result) => {
       if (result.isConfirmed) {
+        // "http://localhost:3001/api/updatemenu"
         try {
-          await axios.patch("http://localhost:3001/api/updatemenu", {
+          await axios.patch(`${process.env.REACT_APP_API_URL}/api/updatemenu`, {
             id,
             menuname,
             price,
@@ -118,7 +120,8 @@ export default function Menupage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:3001/api/deletemenu/${id}`);
+          // `http://localhost:3001/api/deletemenu/${id}`
+          await axios.delete(`${process.env.REACT_APP_API_URL}/api/deletemenu/${id}`);
           setMenuList(menuList.filter((menu) => menu.id !== id));
           Swal.fire({
             icon: "success",

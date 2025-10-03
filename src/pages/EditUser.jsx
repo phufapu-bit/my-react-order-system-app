@@ -22,7 +22,10 @@ export default function EditUserpage() {
   //ฟังก์ดึงชื่อผู้ใช้งาน
   const getuser = async () => {
     try {
-      const res = await axios.post("http://localhost:3001/api/getuser");
+      // "http://localhost:3001/api/getuser"
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/getuser`
+      );
       if (res.data.success && Array.isArray(res.data.users)) {
         setUsers(res.data.users);
       } else {
@@ -90,8 +93,9 @@ export default function EditUserpage() {
     const oldName = editingUser.name;
 
     try {
+      // `http://localhost:3001/api/updateProfileByAdmin/${oldName}`
       const response = await axios.patch(
-        `http://localhost:3001/api/updateProfileByAdmin/${oldName}`,
+        `${process.env.REACT_APP_API_URL}/api/updateProfileByAdmin/${oldName}`,
         {
           newName: editName,
           newPassword: editPassword,
@@ -129,8 +133,9 @@ export default function EditUserpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          // `http://localhost:3001/api/deleteuser/${id}`
           const res = await axios.delete(
-            `http://localhost:3001/api/deleteuser/${id}`
+            `${process.env.REACT_APP_API_URL}/api/deleteuser/${id}`
           );
           if (res.data.success) {
             Swal.fire("ลบสำเร็จ!", res.data.message, "success");

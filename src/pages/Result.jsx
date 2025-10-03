@@ -29,7 +29,8 @@ export default function Resultpage() {
   //  ดึงยอดขายรวมและออเดอร์วันนี้
   const fetchSalesSummary = async () => {
     try {
-      const res = await axios.post("http://localhost:3001/api/getSalesSummary");
+      // "http://localhost:3001/api/getSalesSummary"
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getSalesSummary`);
       if (res.data.success) {
         setTotalSales(res.data.totalSales || 0);
         setTodayOrders(res.data.todayOrders || 0);
@@ -43,8 +44,9 @@ export default function Resultpage() {
   //  ดึงจำนวนออเดอร์กำลังทำ
   const fetchPendingCount = async () => {
     try {
+      // "http://localhost:3001/api/getPendingOrderCount"
       const res = await axios.post(
-        "http://localhost:3001/api/getPendingOrderCount"
+        `${process.env.REACT_APP_API_URL}/api/getPendingOrderCount`
       );
       if (res.data.success) {
         // ต้องแน่ใจว่า Backend ส่ง pendingCount กลับมา
@@ -58,7 +60,8 @@ export default function Resultpage() {
   // ดึงข้อมูลยอดขายรายวันสำหรับกราฟ (สมมติว่ามี API นี้)
   const fetchSalesData = async () => {
     try {
-      const res = await axios.post("http://localhost:3001/api/getDailySales");
+      // "http://localhost:3001/api/getDailySales"
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/getDailySales`);
       if (res.data.success) {
         setSalesData(res.data.salesData); 
       }

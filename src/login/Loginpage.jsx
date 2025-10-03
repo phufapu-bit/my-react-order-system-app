@@ -25,9 +25,9 @@ export default function Login() {
         title: "กรอกข้อมูลให้ครบ",
       });
     }
-
+    // "http://localhost:3001/api/login"
     try {
-      const response = await axios.post("http://localhost:3001/api/login", {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/login`, {
         name,
         password,
       });
@@ -110,8 +110,9 @@ export default function Login() {
       });
     }
 
+    // http://localhost:3001/api/register
     try {
-      const response = await axios.post("http://localhost:3001/api/register", {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/register`, {
         name,
         password,
         role: role.value,
