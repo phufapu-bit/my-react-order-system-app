@@ -23,9 +23,7 @@ export default function EditUserpage() {
   const getuser = async () => {
     try {
       // "http://localhost:3001/api/getuser"
-      const res = await axios.post(
-        `${import.meta.env.VITE_APP_API_URL}/api/getuser`
-      );
+      const res = await axios.post("http://localhost:3001/api/getuser");
       if (res.data.success && Array.isArray(res.data.users)) {
         setUsers(res.data.users);
       } else {
@@ -95,7 +93,9 @@ export default function EditUserpage() {
     try {
       // `http://localhost:3001/api/updateProfileByAdmin/${oldName}`
       const response = await axios.patch(
-        `${import.meta.env.VITE_APP_API_URL}/api/updateProfileByAdmin/${oldName}`,
+        `${
+          import.meta.env.VITE_APP_API_URL
+        }/api/updateProfileByAdmin/${oldName}`,
         {
           newName: editName,
           newPassword: editPassword,

@@ -22,7 +22,7 @@ export default function Orderpage() {
   const fetchMenuData = async () => {
     try {
       // "http://localhost:3001/api/getmenu"
-      const res = await axios.post(`${import.meta.env.VITE_APP_API_URL}/api/getmenu`);
+      const res = await axios.post("http://localhost:3001/api/getmenu");
       if (res.data.success) {
         // เก็บรายการเมนูทั้งหมด
         setMenuList(res.data.menu);
@@ -43,7 +43,7 @@ export default function Orderpage() {
   const getListorder = async () => {
     try {
       // "http://localhost:3001/api/getorder"
-      const res = await axios.post(`${import.meta.env.VITE_APP_API_URL}/api/getorder`);
+      const res = await axios.post("http://localhost:3001/api/getorder");
       if (res.data.success) {
         setOrders(res.data.orders);
       }
@@ -78,7 +78,7 @@ export default function Orderpage() {
       const price = selectedMenuItem.price;
       const totalPrice = price * qty;
 // "http://localhost:3001/api/order"
-      const response = await axios.post(`${import.meta.env.VITE_APP_API_URL}/api/order`, {
+      const response = await axios.post("http://localhost:3001/api/order", {
         tablenum,
         listorder: listorder.value,
         qty: parseInt(qty),
@@ -156,7 +156,7 @@ export default function Orderpage() {
 
           // "http://localhost:3001/api/updateOrder"
           const response = await axios.patch(
-            `${import.meta.env.VITE_APP_API_URL}/api/updateOrder`,
+            "http://localhost:3001/api/updateOrder",
             {
               id,
               tablenum,
@@ -205,7 +205,7 @@ export default function Orderpage() {
       if (result.isConfirmed) {
         try {
           // `http://localhost:3001/api/deleteOrder/${id}`
-          await axios.delete(`${import.meta.env.VITE_APP_API_URL}/api/deleteOrder/${id}`);
+          await axios.delete(`http://localhost:3001/api/deleteOrder/${id}`);
           setOrders(orders.filter((o) => o.id !== id));
           Swal.fire({
             icon: "success",
@@ -238,7 +238,7 @@ export default function Orderpage() {
         try {
           // "http://localhost:3001/api/completeOrder"
           const response = await axios.patch(
-            `${import.meta.env.VITE_APP_API_URL}/api/completeOrder`,
+            "http://localhost:3001/api/completeOrder",
             { id }
           );
           if (response.data.success) {
