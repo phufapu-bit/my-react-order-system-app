@@ -14,6 +14,8 @@ export default function EditUserpage() {
   const [editingUser, setEditingUser] = useState(null);
   const [editRole, setEditRole] = useState(null);
 
+  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
+
   const roleOptions = [
     { value: "user", label: "พนักงาน" },
     { value: "admin", label: "ผู้ดูแลระบบ" },
@@ -23,7 +25,7 @@ export default function EditUserpage() {
   const getuser = async () => {
     try {
       // "http://localhost:3001/api/getuser"
-      const res = await axios.post("http://localhost:3001/api/getuser");
+      const res = await axios.post(`${API_URL}/getuser`);
       if (res.data.success && Array.isArray(res.data.users)) {
         setUsers(res.data.users);
       } else {

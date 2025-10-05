@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; 
+import axios from "axios";
 import "../App.css";
 import {
   LineChart,
@@ -17,20 +17,20 @@ import {
 } from "recharts";
 
 export default function Resultpage() {
-  const [salesData, setSalesData] = useState([]); 
+  const [salesData, setSalesData] = useState([]);
   const [todayOrders, setTodayOrders] = useState(0);
-  const [totalSales, setTotalSales] = useState(0); 
-  const [pendingCount, setPendingCount] = useState(0); 
+  const [totalSales, setTotalSales] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [todaySalesAmount, setTodaySalesAmount] = useState(0);
   const [chartType, setChartType] = useState("line");
 
-
+  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
 
   //  ดึงยอดขายรวมและออเดอร์วันนี้
   const fetchSalesSummary = async () => {
     try {
       // "http://localhost:3001/api/getSalesSummary"
-      const res = await axios.post("http://localhost:3001/api/getSalesSummary");
+      const res = await axios.post(`${API_URL}/getSalesSummary`);
       if (res.data.success) {
         setTotalSales(res.data.totalSales || 0);
         setTodayOrders(res.data.todayOrders || 0);
@@ -45,9 +45,7 @@ export default function Resultpage() {
   const fetchPendingCount = async () => {
     try {
       // "http://localhost:3001/api/getPendingOrderCount"
-      const res = await axios.post(
-        "http://localhost:3001/api/getPendingOrderCount"
-      );
+      const res = await axios.post(`${API_URL}/getPendingOrderCount`);
       if (res.data.success) {
         // ต้องแน่ใจว่า Backend ส่ง pendingCount กลับมา
         setPendingCount(res.data.pendingCount || 0);
@@ -61,9 +59,9 @@ export default function Resultpage() {
   const fetchSalesData = async () => {
     try {
       // "http://localhost:3001/api/getDailySales"
-      const res = await axios.post("http://localhost:3001/api/getDailySales");
+      const res = await axios.post(`${API_URL}/getDailySales`);
       if (res.data.success) {
-        setSalesData(res.data.salesData); 
+        setSalesData(res.data.salesData);
       }
     } catch (error) {
       console.error("Error fetching sales data:", error);
@@ -93,10 +91,10 @@ export default function Resultpage() {
       fetchSalesData();
     }, 2000);
 
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, []);
 
-  // function render chart ตามชนิด 
+  // function render chart ตามชนิด
   const renderChart = () => {
     switch (chartType) {
       case "line":

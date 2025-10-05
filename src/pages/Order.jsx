@@ -14,15 +14,17 @@ export default function Orderpage() {
 
   const [listorder, setListorder] = useState(null);
   const [id, setId] = useState(null);
-  
+
   const [qty, setQty] = useState(1);
 
   const [isEditing, setIsEditing] = useState(false);
 
+  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
+
   const fetchMenuData = async () => {
     try {
       // "http://localhost:3001/api/getmenu"
-      const res = await axios.post("http://localhost:3001/api/getmenu");
+      const res = await axios.post(`${API_URL}/getmenu`);
       if (res.data.success) {
         // เก็บรายการเมนูทั้งหมด
         setMenuList(res.data.menu);
@@ -43,7 +45,7 @@ export default function Orderpage() {
   const getListorder = async () => {
     try {
       // "http://localhost:3001/api/getorder"
-      const res = await axios.post("http://localhost:3001/api/getorder");
+      const res = await axios.post(`${API_URL}/getorder`);
       if (res.data.success) {
         setOrders(res.data.orders);
       }
@@ -77,8 +79,8 @@ export default function Orderpage() {
 
       const price = selectedMenuItem.price;
       const totalPrice = price * qty;
-// "http://localhost:3001/api/order"
-      const response = await axios.post("http://localhost:3001/api/order", {
+      // "http://localhost:3001/api/order"
+      const response = await axios.post(`${API_URL}/order`, {
         tablenum,
         listorder: listorder.value,
         qty: parseInt(qty),
@@ -155,17 +157,14 @@ export default function Orderpage() {
           const totalPrice = price * qty;
 
           // "http://localhost:3001/api/updateOrder"
-          const response = await axios.patch(
-            "http://localhost:3001/api/updateOrder",
-            {
-              id,
-              tablenum,
-              listorder: listorder.value,
-              qty: parseInt(qty),
-              price,
-              total_price: totalPrice,
-            }
-          );
+          const response = await axios.patch(`${API_URL}/updateOrder`, {
+            id,
+            tablenum,
+            listorder: listorder.value,
+            qty: parseInt(qty),
+            price,
+            total_price: totalPrice,
+          });
 
           if (response.data.success) {
             Swal.fire({
@@ -205,7 +204,7 @@ export default function Orderpage() {
       if (result.isConfirmed) {
         try {
           // `http://localhost:3001/api/deleteOrder/${id}`
-          await axios.delete(`http://localhost:3001/api/deleteOrder/${id}`);
+          await axios.delete(`${API_URL}/deleteOrder/${id}`);
           setOrders(orders.filter((o) => o.id !== id));
           Swal.fire({
             icon: "success",
@@ -237,10 +236,9 @@ export default function Orderpage() {
       if (result.isConfirmed) {
         try {
           // "http://localhost:3001/api/completeOrder"
-          const response = await axios.patch(
-            "http://localhost:3001/api/completeOrder",
-            { id }
-          );
+          const response = await axios.patch(`${API_URL}/completeOrder`, {
+            id,
+          });
           if (response.data.success) {
             Swal.fire({
               icon: "success",

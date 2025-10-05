@@ -13,11 +13,13 @@ export default function Menupage() {
   const [isEditing, setIsEditing] = useState(false);
   const [id, setId] = useState(null);
 
+  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
+
   // ฟังก์ชันดึงเมนู
   const getMenuList = async () => {
     // "http://localhost:3001/api/getmenu"
     try {
-      const res = await axios.post("http://localhost:3001/api/getmenu");
+      const res = await axios.post(`${API_URL}/getmenu`);
       if (res.data.success) {
         setMenuList(res.data.menu);
       }
@@ -41,7 +43,7 @@ export default function Menupage() {
         });
       }
       // "http://localhost:3001/api/addmenu"
-      await axios.post("http://localhost:3001/api/addmenu", {
+      await axios.post(`${API_URL}/addmenu`, {
         menuname,
         price,
       });
@@ -84,7 +86,7 @@ export default function Menupage() {
       if (result.isConfirmed) {
         // "http://localhost:3001/api/updatemenu"
         try {
-          await axios.patch("http://localhost:3001/api/updatemenu", {
+          await axios.patch(`${API_URL}/updatemenu`, {
             id,
             menuname,
             price,
@@ -121,7 +123,7 @@ export default function Menupage() {
       if (result.isConfirmed) {
         try {
           // `http://localhost:3001/api/deletemenu/${id}`
-          await axios.delete(`http://localhost:3001/api/deletemenu/${id}`);
+          await axios.delete(`${API_URL}/deletemenu/${id}`);
           setMenuList(menuList.filter((menu) => menu.id !== id));
           Swal.fire({
             icon: "success",
