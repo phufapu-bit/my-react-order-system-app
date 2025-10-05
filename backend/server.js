@@ -1,24 +1,33 @@
 const express = require("express");
-const mysql = require("mysql2/promise"); 
+const mysql = require("mysql2/promise");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
 const app = express();
-const PORT = 3001;
-
+// const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(bodyParser.json());
 
-// Database connection using async/await
+// // Database connection using async/await
+// const db = mysql.createPool({
+//   // เปลี่ยนเป็น pool เพื่อประสิทธิภาพที่ดีกว่า
+//   host: "localhost",
+//   user: "root",
+//   password: "root",
+//   database: "testdb",
+// });
+
 const db = mysql.createPool({
-  // เปลี่ยนเป็น pool เพื่อประสิทธิภาพที่ดีกว่า
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "testdb",
+  // ใช้ Connection URL ที่มาจาก Environment Variable
+  uri: process.env.DATABASE_URL, // บังคับใช้ SSL/TLS ตามที่ TiDB Cloud กำหนด
+  ssl: {
+    rejectUnauthorized: true,
+  }, // ระบุชื่อ Database/Schema ที่ถูกต้อง
+  database: "test", // <--- ตรวจสอบให้แน่ใจว่าชื่อนี้ตรงกับ Schema ใน TiDB (จากรูปที่คุณส่งคือ 'test')
 });
 
 // Start the server only after a successful database connection
@@ -27,7 +36,8 @@ const db = mysql.createPool({
     await db.getConnection(); // ตรวจสอบการเชื่อมต่อ
     console.log("✅ Connected to MySQL");
     app.listen(PORT, () => {
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
+      console.log(`🚀 Server running port ${PORT}`);
+      // http://localhost:${PORT}
     });
   } catch (err) {
     console.error("❌ Database connection failed:", err);
