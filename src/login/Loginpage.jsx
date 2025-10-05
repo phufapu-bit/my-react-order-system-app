@@ -12,7 +12,7 @@ export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com";
+  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
 
   const roleOptions = [
     { value: "user", label: "พนักงาน" },
