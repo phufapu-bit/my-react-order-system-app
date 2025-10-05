@@ -440,8 +440,14 @@ app.post("/api/addmenu", async (req, res) => {
       .json({ success: false, message: "menuname, price required" });
   }
   try {
-    const sql = "INSERT INTO test.masterorder (ordername, price) VALUES (?, ?)";
-    const [results] = await db.query(sql, [menuname, price]);
+    const [maxIdResult] = await db.query(
+      "SELECT MAX(id) AS max_id FROM test.masterorder"
+    );
+    const newId = (maxIdResult[0].max_id || 0) + 1;
+
+    const sql =
+      "INSERT INTO test.masterorder (id, ordername, price) VALUES (?, ?, ?)";
+    const [results] = await db.query(sql, [newId,menuname, price]);
     res.json({
       success: true,
       message: "Menu added successfully",
