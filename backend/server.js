@@ -57,7 +57,7 @@ app.post("/api/login", async (req, res) => {
   }
 
   try {
-    const sql = "SELECT * FROM testdb.user WHERE name = ?";
+    const sql = "SELECT * FROM test.user WHERE name = ?";
     const [results] = await db.query(sql, [name]);
 
     if (results.length > 0) {
@@ -95,7 +95,7 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/getuser", async (req, res) => {
   try {
     // ดึงข้อมูลผู้ใช้ทั้งหมด (ยกเว้นรหัสผ่าน ถ้าไม่จำเป็นต้องแสดง)
-    const sql = "SELECT * FROM testdb.user ORDER BY id DESC";
+    const sql = "SELECT * FROM test.user ORDER BY id DESC";
     const [results] = await db.query(sql);
 
     // *** โครงสร้างการส่งข้อมูลกลับที่ถูกต้อง ***
@@ -126,7 +126,7 @@ app.patch("/api/updateProfileByAdmin/:name", async (req, res) => {
     // 1. จัดการการเปลี่ยนชื่อผู้ใช้
     if (newName && newName !== oldName) {
       // ตรวจสอบชื่อใหม่ว่าถูกใช้ไปแล้วหรือไม่
-      const checkSql = "SELECT name FROM testdb.user WHERE name = ?";
+      const checkSql = "SELECT name FROM test.user WHERE name = ?";
       const [existingUsers] = await db.query(checkSql, [newName]);
       if (existingUsers.length > 0) {
         return res
@@ -164,7 +164,7 @@ app.patch("/api/updateProfileByAdmin/:name", async (req, res) => {
     }
 
     // รวม SQL Query และทำการอัปเดต
-    const sql = `UPDATE testdb.user SET ${updates.join(", ")} WHERE name = ?`;
+    const sql = `UPDATE test.user SET ${updates.join(", ")} WHERE name = ?`;
 
     // หากมีการเปลี่ยนชื่อผู้ใช้ ต้องใช้ชื่อเดิม (oldName) ในการค้นหา
     // แต่ถ้าเปลี่ยนชื่อ, อัปเดต name = ? จะถูกเพิ่มเข้าไปใน params ก่อนแล้ว
@@ -197,7 +197,7 @@ app.delete("/api/deleteuser/:id", async (req, res) => {
     //     return res.status(403).json({ success: false, message: "ไม่สามารถลบบัญชีผู้ใช้ของคุณเองได้" });
     // }
 
-    const sql = "DELETE FROM testdb.user WHERE id = ?";
+    const sql = "DELETE FROM test.user WHERE id = ?";
     const [results] = await db.query(sql, [id]);
 
     if (results.affectedRows > 0) {
@@ -230,7 +230,7 @@ app.post("/api/register", async (req, res) => {
   }
 
   try {
-    const checkSql = "SELECT name FROM testdb.user WHERE name = ?";
+    const checkSql = "SELECT name FROM test.user WHERE name = ?";
     const [existingUsers] = await db.query(checkSql, [name]);
 
     if (existingUsers.length > 0) {
@@ -269,7 +269,7 @@ app.post("/api/order", async (req, res) => {
   }
   try {
     const sql =
-      "INSERT INTO testdb.listorder (tablenum, listorder, qty, price, total_price, status) VALUES (?, ?, ?, ?, ?, 'pending')";
+      "INSERT INTO test.listorder (tablenum, listorder, qty, price, total_price, status) VALUES (?, ?, ?, ?, ?, 'pending')";
     const [results] = await db.query(sql, [
       tablenum,
       listorder,
@@ -319,7 +319,7 @@ app.patch("/api/completeOrder", async (req, res) => {
 
 app.post("/api/getorder", async (req, res) => {
   try {
-    const sql = "SELECT * FROM testdb.listorder ORDER BY id DESC LIMIT 1000";
+    const sql = "SELECT * FROM test.listorder ORDER BY id DESC LIMIT 1000";
     const [results] = await db.query(sql);
     res.json({ success: true, orders: results });
   } catch (err) {
@@ -340,7 +340,7 @@ app.patch("/api/updateOrder", async (req, res) => {
   }
   try {
     const sql =
-      "UPDATE testdb.listorder SET tablenum = ?, listorder = ?, qty = ?, price = ?, total_price = ? WHERE id = ?";
+      "UPDATE test.listorder SET tablenum = ?, listorder = ?, qty = ?, price = ?, total_price = ? WHERE id = ?";
     const [results] = await db.query(sql, [
       tablenum,
       listorder,
@@ -368,7 +368,7 @@ app.delete("/api/deleteOrder/:id", async (req, res) => {
     return res.status(400).json({ success: false, message: "id required" });
   }
   try {
-    const sql = "DELETE FROM testdb.listorder WHERE id = ?";
+    const sql = "DELETE FROM test.listorder WHERE id = ?";
     const [results] = await db.query(sql, [id]);
     if (results.affectedRows > 0) {
       res.json({ success: true, message: "Delete order successfully" });
@@ -385,7 +385,7 @@ app.delete("/api/deleteOrder/:id", async (req, res) => {
 
 app.post("/api/getmenu", async (req, res) => {
   try {
-    const sql = "SELECT * FROM testdb.masterorder ORDER BY id DESC LIMIT 1000";
+    const sql = "SELECT * FROM test.masterorder ORDER BY id DESC LIMIT 1000";
     const [results] = await db.query(sql);
     res.json({ success: true, menu: results });
   } catch (err) {
@@ -405,7 +405,7 @@ app.post("/api/addmenu", async (req, res) => {
   }
   try {
     const sql =
-      "INSERT INTO testdb.masterorder (ordername, price) VALUES (?, ?)";
+      "INSERT INTO test.masterorder (ordername, price) VALUES (?, ?)";
     const [results] = await db.query(sql, [menuname, price]);
     res.json({
       success: true,
@@ -429,7 +429,7 @@ app.patch("/api/updatemenu", async (req, res) => {
   }
   try {
     const sql =
-      "UPDATE testdb.masterorder SET ordername = ?, price = ? WHERE id = ?";
+      "UPDATE test.masterorder SET ordername = ?, price = ? WHERE id = ?";
     const [results] = await db.query(sql, [menuname, price, id]);
     if (results.affectedRows > 0) {
       res.json({ success: true, message: "Update menu successfully" });
@@ -450,7 +450,7 @@ app.delete("/api/deletemenu/:id", async (req, res) => {
     return res.status(400).json({ success: false, message: "id required" });
   }
   try {
-    const sql = "DELETE FROM testdb.masterorder WHERE id = ?";
+    const sql = "DELETE FROM test.masterorder WHERE id = ?";
     const [results] = await db.query(sql, [id]);
     if (results.affectedRows > 0) {
       res.json({ success: true, message: "Delete order successfully" });
@@ -467,7 +467,7 @@ app.delete("/api/deletemenu/:id", async (req, res) => {
 app.post("/api/getPendingOrderCount", async (req, res) => {
   try {
     const sql =
-      "SELECT COUNT(*) AS pending_count FROM testdb.listorder WHERE status = 'pending';";
+      "SELECT COUNT(*) AS pending_count FROM test.listorder WHERE status = 'pending';";
     const [results] = await db.query(sql);
     const pendingCount = results.length > 0 ? results[0].pending_count : 0;
     res.json({ success: true, pendingCount: pendingCount });
@@ -483,14 +483,14 @@ app.post("/api/getSalesSummary", async (req, res) => {
     // 1. ยอดขายรวมตลอดกาล (Total Sales)
     const sqlTotalSales = `
             SELECT SUM(total_price) AS total_sales
-            FROM testdb.listorder 
+            FROM test.listorder 
             WHERE status = 'completed';
         `;
 
     // 2. จำนวนออเดอร์วันนี้ (Today's Order Count)
     const sqlTodayOrdersCount = `
             SELECT COUNT(id) AS today_orders_count
-            FROM testdb.listorder
+            FROM test.listorder
             WHERE status = 'completed' 
             AND DATE(update_status) = CURDATE();
         `;
@@ -498,7 +498,7 @@ app.post("/api/getSalesSummary", async (req, res) => {
     // 3. **✅ ยอดขายรวมวันนี้ (Today's Sales Amount)**
     const sqlTodaySalesAmount = `
             SELECT SUM(total_price) AS today_sales_amount
-            FROM testdb.listorder 
+            FROM test.listorder 
             WHERE status = 'completed'
             AND DATE(update_status) = CURDATE();
         `;
@@ -550,7 +550,7 @@ app.post("/api/getDailySales", async (req, res) => {
                 END AS day,
                 SUM(total_price) AS sales,
                 DAYOFWEEK(update_status) AS day_order
-            FROM testdb.listorder 
+            FROM test.listorder 
             WHERE status = 'completed' 
             GROUP BY day, day_order
             ORDER BY day_order;
