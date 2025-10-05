@@ -259,6 +259,35 @@ app.post("/api/register", async (req, res) => {
 
 // ส่วน API อื่นๆ ที่เหลือ ให้ปรับแก้จาก db.query(...) เป็น await db.query(...) ทั้งหมด
 
+// app.post("/api/order", async (req, res) => {
+//   const { tablenum, listorder, qty, price, total_price } = req.body;
+//   if (!tablenum || !listorder || !qty) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "tableNumber, listOrder, qty required",
+//     });
+//   }
+//   try {
+//     const sql =
+//       "INSERT INTO test.listorder (tablenum, listorder, qty, price, total_price, status) VALUES (?, ?, ?, ?, ?, 'pending')";
+//     const [results] = await db.query(sql, [
+//       tablenum,
+//       listorder,
+//       qty,
+//       price,
+//       total_price,
+//     ]);
+//     res.json({
+//       success: true,
+//       message: "Order added successfully",
+//       orderId: results.insertId,
+//     });
+//   } catch (err) {
+//     console.error("❌ Query error:", err);
+//     res.status(500).json({ success: false, message: "Database error" });
+//   }
+// });
+
 app.post("/api/order", async (req, res) => {
   const { tablenum, listorder, qty, price, total_price } = req.body;
   if (!tablenum || !listorder || !qty) {
@@ -268,9 +297,16 @@ app.post("/api/order", async (req, res) => {
     });
   }
   try {
+    // 1. หา ID ที่มากที่สุดในปัจจุบัน (หรือ 0 ถ้าไม่มีข้อมูลเลย)
+    const [maxIdResult] = await db.query(
+      "SELECT MAX(id) AS max_id FROM test.listorder"
+    );
+    const newId = (maxIdResult[0].max_id || 0) + 1; // 2. แก้ไข SQL Query: เพิ่ม 'id' ในคอลัมน์ และเพิ่ม '?' สำหรับค่า id ใหม่
+
     const sql =
-      "INSERT INTO test.listorder (tablenum, listorder, qty, price, total_price, status) VALUES (?, ?, ?, ?, ?, 'pending')";
+      "INSERT INTO test.listorder (id, tablenum, listorder, qty, price, total_price, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')"; // 3. แก้ไข Array ของค่า: เพิ่ม newId เป็นค่าแรก
     const [results] = await db.query(sql, [
+      newId, // <--- เพิ่มค่า ID ใหม่ที่คำนวณได้
       tablenum,
       listorder,
       qty,
@@ -280,7 +316,7 @@ app.post("/api/order", async (req, res) => {
     res.json({
       success: true,
       message: "Order added successfully",
-      orderId: results.insertId,
+      orderId: newId, // ใช้ newId แทน results.insertId
     });
   } catch (err) {
     console.error("❌ Query error:", err);
@@ -404,8 +440,7 @@ app.post("/api/addmenu", async (req, res) => {
       .json({ success: false, message: "menuname, price required" });
   }
   try {
-    const sql =
-      "INSERT INTO test.masterorder (ordername, price) VALUES (?, ?)";
+    const sql = "INSERT INTO test.masterorder (ordername, price) VALUES (?, ?)";
     const [results] = await db.query(sql, [menuname, price]);
     res.json({
       success: true,
