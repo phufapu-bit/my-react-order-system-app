@@ -12,6 +12,8 @@ export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
+  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com";
+
   const roleOptions = [
     { value: "user", label: "พนักงาน" },
     { value: "admin", label: "ผู้ดูแลระบบ" },
@@ -27,7 +29,7 @@ export default function Login() {
     }
     // "http://localhost:3001/api/login"
     try {
-      const response = await axios.post("/api/login", {
+      const response = await axios.post(`${API_URL}/login`, {
         name,
         password,
       });
@@ -112,7 +114,7 @@ export default function Login() {
 
     // http://localhost:3001/api/register
     try {
-      const response = await axios.post("/api/register", {
+      const response = await axios.post(`${API_URL}/register`, {
         name,
         password,
         role: role.value,
