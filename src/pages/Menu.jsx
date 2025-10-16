@@ -17,6 +17,7 @@ export default function Menupage() {
 
   // ฟังก์ชันดึงเมนู
   const getMenuList = async () => {
+    // `${API_URL}/getmenu`
     // "http://localhost:3001/api/getmenu"
     try {
       const res = await axios.post(`${API_URL}/getmenu`);
@@ -42,6 +43,7 @@ export default function Menupage() {
           title: "กรอกข้อมูลให้ครบ",
         });
       }
+      // `${API_URL}/addmenu`
       // "http://localhost:3001/api/addmenu"
       await axios.post(`${API_URL}/addmenu`, {
         menuname,
@@ -84,6 +86,7 @@ export default function Menupage() {
       cancelButtonText: "ไม่",
     }).then(async (result) => {
       if (result.isConfirmed) {
+        // `${API_URL}/updatemenu`
         // "http://localhost:3001/api/updatemenu"
         try {
           await axios.patch(`${API_URL}/updatemenu`, {
@@ -122,6 +125,7 @@ export default function Menupage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          // `${API_URL}/deletemenu/${id}`
           // `http://localhost:3001/api/deletemenu/${id}`
           await axios.delete(`${API_URL}/deletemenu/${id}`);
           setMenuList(menuList.filter((menu) => menu.id !== id));
@@ -150,6 +154,11 @@ export default function Menupage() {
     setIsEditing(false);
   };
 
+  const clearForm = () => {
+    setMenuname("");
+    setPrice("");
+  };
+
   // การดึงข้อมูล
   useEffect(() => {
     getMenuList();
@@ -173,7 +182,7 @@ export default function Menupage() {
       <h1
         className="header-title"
         style={{
-          background: "linear-gradient(90deg, #0d1b2a, #1b4332)",
+          background: "linear-gradient(90deg, #2e5d4f, #a8d5ba)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           fontFamily: "'Kanit', sans-serif",
@@ -189,9 +198,9 @@ export default function Menupage() {
         >
           {/* ฟอร์มเพิ่ม/แก้ไขเมนู */}
           <div className="card p-3 mb-4 shadow-sm">
-            <h3>{isEditing ? "✏️ แก้ไขเมนู" : "➕ เพิ่มเมนู"}</h3>
+            <h3>{isEditing ? "แก้ไขเมนู" : "เพิ่มเมนู"}</h3>
             <div className="row g-3">
-              <div className="col-md-5">
+              <div className="col-md-6">
                 <input
                   style={{ fontSize: "20px" }}
                   type="text"
@@ -202,7 +211,7 @@ export default function Menupage() {
                   autoFocus
                 />
               </div>
-              <div className="col-md-3">
+              <div className="col-md-2">
                 <input
                   style={{ fontSize: "20px" }}
                   type="number"
@@ -213,14 +222,14 @@ export default function Menupage() {
                   min="0"
                 />
               </div>
-              <div className="col-md-4">
+              <div className="col-md-2">
                 {isEditing ? (
                   <button
                     style={{ fontSize: "20px" }}
                     className="btn btn-warning w-100"
                     onClick={handleUpdate}
                   >
-                    ✅ อัปเดตเมนู
+                    อัปเดตเมนู
                   </button>
                 ) : (
                   <button
@@ -228,9 +237,18 @@ export default function Menupage() {
                     className="btn btn-success w-100"
                     onClick={handleAddMenu}
                   >
-                    ➕ เพิ่มเมนู
+                    เพิ่มเมนู
                   </button>
                 )}
+              </div>
+              <div className="col-md-2">
+                <button
+                  style={{ fontSize: "20px" }}
+                  className="btn btn-danger w-100"
+                  onClick={clearForm}
+                >
+                  ลบ
+                </button>
               </div>
             </div>
           </div>
@@ -246,7 +264,6 @@ export default function Menupage() {
                 style={{ position: "sticky", zIndex: "1000", top: "0" }}
               >
                 <tr>
-                  <th>รหัส</th>
                   <th>ชื่อเมนู</th>
                   <th>ราคา</th>
                   <th>การจัดการ</th>
@@ -256,7 +273,6 @@ export default function Menupage() {
                 {menuList.length > 0 ? (
                   menuList.map((menu, i) => (
                     <tr key={menu.id || i}>
-                      <td>{menu.id}</td>
                       <td>{menu.ordername}</td>
                       <td>{menu.price} บาท</td>
                       <td>
@@ -264,14 +280,16 @@ export default function Menupage() {
                           <button
                             className="btn btn-primary flex-fill"
                             onClick={() => handleEdit(menu)}
+                            style={{ fontSize: "20px" }}
                           >
-                            ✏️ แก้ไข
+                            แก้ไข
                           </button>
                           <button
                             className="btn btn-danger flex-fill"
                             onClick={() => handleDelete(menu.id)}
+                            style={{ fontSize: "20px" }}
                           >
-                            🗑️ ลบ
+                            ลบ
                           </button>
                         </div>
                       </td>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import axios from "axios";
 import "../App.css";
 import {
@@ -18,18 +20,36 @@ import {
 
 export default function Resultpage() {
   const [salesData, setSalesData] = useState([]);
+  const [guestOrders, setGuestOrders] = useState([]);
   const [todayOrders, setTodayOrders] = useState(0);
   const [totalSales, setTotalSales] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [todaySalesAmount, setTodaySalesAmount] = useState(0);
   const [chartType, setChartType] = useState("line");
-
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const isAdminOrUser = localStorage.getItem("role");
+  const guestTablenum = localStorage.getItem("guest_tablenum");
   const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
 
-  //  ดึงยอดขายรวมและออเดอร์วันนี้
+  // ฟังก์ชันจัดรูปแบบวันที่สำหรับแกน X และ Tooltip (เหมือนเดิม)
+  const dateFormatter = (tickItem) => {
+    const date = new Date(tickItem);
+    if (isNaN(date.getTime())) return tickItem;
+    // รูปแบบ วัน/เดือน (เช่น 15/10)
+    // 2-digit
+    return date.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+
   const fetchSalesSummary = async () => {
+    // `${API_URL}/getSalesSummary`
+    // "http://localhost:3001/api/getSalesSummary"
     try {
-      // "http://localhost:3001/api/getSalesSummary"
       const res = await axios.post(`${API_URL}/getSalesSummary`);
       if (res.data.success) {
         setTotalSales(res.data.totalSales || 0);
@@ -41,13 +61,14 @@ export default function Resultpage() {
     }
   };
 
-  //  ดึงจำนวนออเดอร์กำลังทำ
   const fetchPendingCount = async () => {
+    // `${API_URL}/getPendingOrderCount`
+    // "http://localhost:3001/api/getPendingOrderCount"
     try {
-      // "http://localhost:3001/api/getPendingOrderCount"
-      const res = await axios.post(`${API_URL}/getPendingOrderCount`);
+      const res = await axios.post(
+        `${API_URL}/getPendingOrderCount`
+      );
       if (res.data.success) {
-        // ต้องแน่ใจว่า Backend ส่ง pendingCount กลับมา
         setPendingCount(res.data.pendingCount || 0);
       }
     } catch (error) {
@@ -55,47 +76,135 @@ export default function Resultpage() {
     }
   };
 
-  // ดึงข้อมูลยอดขายรายวันสำหรับกราฟ (สมมติว่ามี API นี้)
+
   const fetchSalesData = async () => {
+    // `${API_URL}/getDailySales`
+    // "http://localhost:3001/api/getDailySales"
     try {
-      // "http://localhost:3001/api/getDailySales"
       const res = await axios.post(`${API_URL}/getDailySales`);
       if (res.data.success) {
         setSalesData(res.data.salesData);
       }
     } catch (error) {
       console.error("Error fetching sales data:", error);
-      // ข้อมูลจำลองสำรอง หากเชื่อมต่อ API กราฟไม่ได้
-      setSalesData([
-        { day: "Mon", sales: 200 },
-        { day: "Tue", sales: 450 },
-        { day: "Wed", sales: 300 },
-        { day: "Thu", sales: 500 },
-        { day: "Fri", sales: 700 },
-        { day: "Sat", sales: 650 },
-        { day: "Sun", sales: 400 },
-      ]);
+      setSalesData([]);
     }
   };
 
-  // **useEffect สำหรับโหลดข้อมูลทั้งหมดเมื่อ Component ถูก Mount**
-  useEffect(() => {
-    fetchSalesSummary();
-    fetchPendingCount();
-    fetchSalesData();
+  const fetchGuestOrder = async (tablenum) => {
+    // `${API_URL}/guestOrders?tablenum=${tablenum}`
+    // `http://localhost:3001/api/guestOrders?tablenum=${tablenum}`
+    try {
+      const res = await axios.get(
+        `${API_URL}/guestOrders?tablenum=${tablenum}`
+      );
+      if (res.data.success) {
+        setGuestOrders(res.data.data || res.data.orders || []);
+      }
+    } catch (error) {
+      console.error("Error fetching guest orders:", error);
+      localStorage.removeItem("guest_tablenum");
+    }
+  };
 
-    // หากต้องการอัปเดตข้อมูลอัตโนมัติทุกๆ 2 วินาที
-    const interval = setInterval(() => {
+  //  2. ปรับฟังก์ชันสำหรับดาวน์โหลด Excel เพื่อใช้การกรองวันที่
+  const exportToExcel = () => {
+    let filteredData = salesData;
+
+    // ตรวจสอบและกรองตามช่วงวันที่
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      // เพิ่ม 1 วันใน endDate เพื่อให้รวมวันที่สิ้นสุด
+      const end = new Date(endDate);
+      end.setDate(end.getDate() + 1);
+
+      filteredData = salesData.filter((item) => {
+        // item.update_at คือวันที่ในรูปแบบ 'YYYY-MM-DD' จาก backend
+        const itemDate = new Date(item.update_at);
+        if (isNaN(itemDate.getTime())) return false; // ป้องกันข้อมูลเสีย
+
+        // เปรียบเทียบวันที่
+        return itemDate >= start && itemDate < end;
+      });
+
+      if (filteredData.length === 0) {
+        alert("ไม่พบข้อมูลยอดขายในช่วงวันที่ที่เลือก");
+        return;
+      }
+    } else if (startDate || endDate) {
+      alert("กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุดให้ครบถ้วนเพื่อทำการกรอง");
+      return;
+    }
+
+    const dataForExport = filteredData.map((item) => ({
+      วันที่: new Date(item.update_at).toLocaleDateString("th-TH"),
+      "ยอดขาย (บาท)": item.sales,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataForExport);
+    const wb = { Sheets: { ยอดขายรายวัน: ws }, SheetNames: ["ยอดขายรายวัน"] };
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+
+    // ตั้งชื่อไฟล์ตามช่วงวันที่หากมีการกรอง
+    let filename = `ยอดขายรายวัน_${new Date().toLocaleDateString(
+      "th-TH"
+    )}.xlsx`;
+    if (startDate && endDate) {
+      filename = `ยอดขาย_${startDate}_ถึง_${endDate}.xlsx`;
+    }
+
+    saveAs(data, filename);
+  };
+
+
+  useEffect(() => {
+    if (isAdminOrUser) {
       fetchSalesSummary();
       fetchPendingCount();
       fetchSalesData();
-    }, 2000);
 
-    return () => clearInterval(interval);
-  }, []);
+      const interval = setInterval(() => {
+        fetchSalesSummary();
+        fetchPendingCount();
+        fetchSalesData();
+      }, 10000);
+      return () => clearInterval(interval);
+    } else if (guestTablenum) {
+      fetchGuestOrder(guestTablenum);
 
-  // function render chart ตามชนิด
+      const interval = setInterval(() => {
+        fetchGuestOrder(guestTablenum);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+    return () => {};
+  }, [isAdminOrUser, guestTablenum]);
+
   const renderChart = () => {
+    const isDateMode = salesData[0] && salesData[0].update_at;
+
+    const xAxisProps = {
+      dataKey: isDateMode ? "update_at" : "day",
+      tickFormatter: isDateMode ? dateFormatter : undefined,
+      tick: { fill: "#555", fontSize: 16, fontWeight: 500 },
+      axisLine: { stroke: "#ccc" },
+      interval: "preserveStartEnd",
+    };
+
+    const tooltipProps = {
+      labelFormatter: isDateMode ? dateFormatter : undefined,
+      contentStyle: {
+        backgroundColor: "#fff",
+        borderRadius: "8px",
+        borderColor: "#ccc",
+        fontFamily: "sans-serif",
+        letterSpacing: "0.5px",
+      },
+      itemStyle: { color: "#1f3b6f", fontWeight: 500 },
+      labelStyle: { fontWeight: "bold", fontSize: "20px" },
+    };
+
     switch (chartType) {
       case "line":
         return (
@@ -104,26 +213,12 @@ export default function Resultpage() {
             margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
           >
             <CartesianGrid stroke="#e0e0e0" strokeDasharray="4 4" />
-            <XAxis
-              dataKey="day"
-              tick={{ fill: "#555", fontSize: 16, fontWeight: 500 }}
-              axisLine={{ stroke: "#ccc" }}
-            />
+            <XAxis {...xAxisProps} />
             <YAxis
               tick={{ fill: "#555", fontSize: 16, fontWeight: 500 }}
               axisLine={{ stroke: "#ccc" }}
             />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#fff",
-                borderRadius: "8px",
-                borderColor: "#ccc",
-                fontFamily: "sans-serif",
-                letterSpacing: "0.5px",
-              }}
-              itemStyle={{ color: "#1f3b6f", fontWeight: 500 }}
-              labelStyle={{ fontWeight: "bold", fontSize: "20px" }}
-            />
+            <Tooltip {...tooltipProps} />
             <Legend
               verticalAlign="top"
               height={30}
@@ -156,16 +251,12 @@ export default function Resultpage() {
             margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
           >
             <CartesianGrid stroke="#e0e0e0" strokeDasharray="4 4" />
-            <XAxis
-              dataKey="day"
-              tick={{ fill: "#555", fontSize: 18, fontWeight: 500 }}
-              axisLine={{ stroke: "#ccc" }}
-            />
+            <XAxis {...xAxisProps} />
             <YAxis
               tick={{ fill: "#555", fontSize: 18, fontWeight: 500 }}
               axisLine={{ stroke: "#ccc" }}
             />
-            <Tooltip />
+            <Tooltip {...tooltipProps} />
             <Legend
               verticalAlign="top"
               height={30}
@@ -185,16 +276,12 @@ export default function Resultpage() {
             margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
           >
             <CartesianGrid stroke="#e0e0e0" strokeDasharray="4 4" />
-            <XAxis
-              dataKey="day"
-              tick={{ fill: "#555", fontSize: 18, fontWeight: 500 }}
-              axisLine={{ stroke: "#ccc" }}
-            />
+            <XAxis {...xAxisProps} />
             <YAxis
               tick={{ fill: "#555", fontSize: 18, fontWeight: 500 }}
               axisLine={{ stroke: "#ccc" }}
             />
-            <Tooltip />
+            <Tooltip {...tooltipProps} />
             <Legend
               verticalAlign="top"
               height={30}
@@ -223,8 +310,104 @@ export default function Resultpage() {
     }
   };
 
+  // function แปลงสถานะจากอังกฤษเป็นไทย 
+  const getThaiStatus = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "กำลังทำอาหาร";
+      case "completed":
+        return "เสร็จสิ้น";
+      default:
+        return status;
+    }
+  };
+
+  // ** Logic การแสดงผลหลัก **
+  if (!isAdminOrUser && guestTablenum) {
+    // (Guest Status Logic: เหมือนเดิม)
+    return (
+      <div
+        className="container-fluid py-4"
+        style={{ fontFamily: "'Kanit', sans-serif" }}
+      >
+        <h1
+          className="header-title text-center mb-5"
+          style={{
+            background: "linear-gradient(90deg, #2e5d4f, #a8d5ba)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            fontWeight: 700,
+          }}
+        >
+          สถานะออเดอร์โต๊ะที่ {guestTablenum}
+        </h1>
+
+        {guestOrders.length > 0 ? (
+          guestOrders.map((order) => (
+            <div
+              key={order.id}
+              className="card p-3 mb-3 shadow-sm"
+              style={{
+                borderRadius: "12px",
+                borderLeft:
+                  order.status?.toLowerCase() === "pending"
+                    ? "5px solid #ff7f27"
+                    : "5px solid #2e5d4f",
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-center">
+                <h4 style={{ margin: 0 }}>
+                  {order.listorder} ({order.qty}x)
+                </h4>
+                <span
+                  style={{
+                    fontSize: "1.2rem",
+                    fontWeight: 700,
+                    color:
+                      order.status?.toLowerCase() === "pending"
+                        ? "#ff7f27"
+                        : "#2e5d4f",
+                  }}
+                >
+                  {getThaiStatus(order.status)}
+                </span>
+              </div>
+              <p className="text-muted mb-0">
+                ราคารวม: ฿{Number(order.total_price).toFixed(2)}
+              </p>
+              <p className="text-muted mb-0" style={{ fontSize: "0.8rem" }}>
+                อัปเดตล่าสุด :
+                {new Date(order.update_at).toLocaleString("th-TH", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+              </p>
+            </div>
+          ))
+        ) : (
+          <div className="text-center p-5">
+            <p className="h4 text-muted">ไม่พบออเดอร์ที่กำลังดำเนินการ</p>
+            <p className="text-muted">โปรดรอสักครู่ หรือทำการสั่งซื้อใหม่</p>
+            <button
+              className="btn mt-3"
+              style={{ backgroundColor: "#ff7f27", color: "white" }}
+              onClick={() => (window.location.href = "/Orderpage")}
+            >
+              สั่งอาหารใหม่
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 2. ถ้าเป็น Admin/User ให้แสดง Admin Dashboard
   return (
-    <div className="container-fluid">
+    <div className="container-fluid py-4">
       <h1
         className="header-title"
         style={{
@@ -235,24 +418,22 @@ export default function Resultpage() {
           letterSpacing: "0.5px",
         }}
       >
-        สรุปยอดรวม
+        สรุปยอดรวม (Admin Dashboard)
       </h1>
 
       <div className="row mb-4">
-        {/* Card 1: จำนวนออเดอร์วันนี้ (โทนสีส้มอ่อน/ขาว) */}
         <div className="col-md-3 mb-3">
           <div
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              // โทนส้ม
               background: "linear-gradient(135deg, #FFF0E6, #ffffff)",
-              borderLeft: "5px solid #ff7f27", // เพิ่มแถบสีด้านซ้าย
+              borderLeft: "5px solid #ff7f27",
             }}
           >
             <h3
               style={{
-                color: "#ff7f27", // สีส้มเข้ม
+                color: "#ff7f27",
                 fontWeight: 700,
                 fontFamily: "'Kanit', sans-serif",
                 letterSpacing: "0.5px",
@@ -273,20 +454,18 @@ export default function Resultpage() {
           </div>
         </div>
 
-        {/* Card 2: ยอดขายวันนี้ (โทนสีเขียว/เหลือง) */}
         <div className="col-md-3 mb-3">
           <div
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              // โทนเขียว/เหลือง
               background: "linear-gradient(135deg, #ECF9E3, #ffffff)",
               borderLeft: "5px solid #2e5d4f",
             }}
           >
             <h3
               style={{
-                color: "#2e5d4f", // สีเขียวเข้ม
+                color: "#2e5d4f",
                 fontWeight: 700,
                 fontFamily: "'Kanit', sans-serif",
                 letterSpacing: "0.5px",
@@ -311,20 +490,18 @@ export default function Resultpage() {
           </div>
         </div>
 
-        {/* Card 3: ยอดขายรวมทั้งหมด (โทนสีม่วง/น้ำเงิน) */}
         <div className="col-md-3 mb-3">
           <div
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              //  โทนม่วง
               background: "linear-gradient(135deg, #EBE6FF, #ffffff)",
               borderLeft: "5px solid #4b3f72",
             }}
           >
             <h3
               style={{
-                color: "#4b3f72", // สีม่วงเข้ม
+                color: "#4b3f72",
                 fontWeight: 700,
                 fontFamily: "'Kanit', sans-serif",
                 letterSpacing: "0.5px",
@@ -349,20 +526,18 @@ export default function Resultpage() {
           </div>
         </div>
 
-        {/* Card 4: กำลังทำอาหาร (โทนสีฟ้า/น้ำเงินอ่อน) */}
         <div className="col-md-3 mb-3">
           <div
             className="card p-4 shadow-sm text-center"
             style={{
               borderRadius: "15px",
-              //  โทนฟ้า
               background: "linear-gradient(135deg, #E6F7FF, #ffffff)",
               borderLeft: "5px solid #3b8ca7",
             }}
           >
             <h3
               style={{
-                color: "#3b8ca7", // สีฟ้าเข้ม
+                color: "#3b8ca7",
                 fontWeight: 700,
                 fontFamily: "'Kanit', sans-serif",
                 letterSpacing: "0.5px",
@@ -383,37 +558,106 @@ export default function Resultpage() {
           </div>
         </div>
       </div>
-      {/* Chart selector - ใช้ logic เดิม */}
-      <div className="mb-3">
-        <label
-          style={{
-            marginRight: "10px",
-            fontWeight: 600,
-            color: "black",
-            fontFamily: "'Kanit', sans-serif",
-            fontSize: "1.2rem",
-            letterSpacing: "0.5px",
-          }}
-        >
-          เลือกชนิดกราฟ:
-        </label>
-        <select
-          value={chartType}
-          style={{
-            width: "110px",
-            height: "40px",
-            borderRadius: "10px",
-            fontFamily: "'Kanit', sans-serif",
-            letterSpacing: "0.5px",
-          }}
-          onChange={(e) => setChartType(e.target.value)}
-        >
-          <option value="line">Line Chart</option>
-          <option value="bar">Bar Chart</option>
-          <option value="area">Area Chart</option>
-        </select>
+
+      {/* 3. ส่วนการกรองวันที่และ Chart selector ที่แก้ไข */}
+      <div className="row mb-3 align-items-end">
+        {/* ตัวเลือกวันที่ */}
+        <div className="col-md-6 d-flex align-items-center mb-2 mb-md-0 text-dark">
+          <label
+            style={{
+              marginRight: "10px",
+              fontWeight: 600,
+              fontFamily: "'Kanit', sans-serif",
+              fontSize: "1rem",
+            }}
+          >
+            วันที่เริ่มต้น:
+          </label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            style={{
+              width: "140px",
+              height: "40px",
+              borderRadius: "10px",
+              padding: "0 10px",
+              marginRight: "5px",
+            }}
+          />
+          <span style={{ margin: "0 5px", fontWeight: 500 , fontFamily:"'Kanit', sans-serif"}}>ถึง</span>
+          <label
+            style={{
+              marginRight: "10px",
+              fontWeight: 600,
+              fontFamily: "'Kanit', sans-serif",
+              fontSize: "1rem",
+            }}
+          >
+            วันที่สิ้นสุด:
+          </label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            style={{
+              width: "140px",
+              height: "40px",
+              borderRadius: "10px",
+              padding: "0 10px",
+            }}
+          />
+        </div>
+
+        {/* ตัวเลือกกราฟและปุ่ม Excel */}
+        <div className="col-md-6 d-flex justify-content-end align-items-center">
+          <label
+            style={{
+              marginRight: "10px",
+              fontWeight: 600,
+              color: "black",
+              fontFamily: "'Kanit', sans-serif",
+              fontSize: "1.2rem",
+              letterSpacing: "0.5px",
+            }}
+          >
+            เลือกชนิดกราฟ:
+          </label>
+          <select
+            value={chartType}
+            style={{
+              width: "110px",
+              height: "40px",
+              borderRadius: "10px",
+              fontFamily: "'Kanit', sans-serif",
+              letterSpacing: "0.5px",
+              marginRight: "20px",
+            }}
+            onChange={(e) => setChartType(e.target.value)}
+          >
+            <option value="line">Line Chart</option>
+            <option value="bar">Bar Chart</option>
+            <option value="area">Area Chart</option>
+          </select>
+
+          <button
+            className="btn btn-success"
+            onClick={exportToExcel}
+            style={{
+              color: "white",
+              fontWeight: 600,
+              borderRadius: "10px",
+              // padding: "8px 15px",
+              fontSize: "18px",
+              fontFamily: "'Kanit', sans-serif",
+            }}
+          >
+            ดาวน์โหลด Excel
+          </button>
+        </div>
       </div>
-      {/* Sales Chart - ใช้ logic เดิม */}
+
+      {/* Sales Chart (เหมือนเดิม) */}
       <div
         className="card p-4 shadow-sm"
         style={{ borderRadius: "16px", backgroundColor: "#fdfcfb" }}
@@ -423,7 +667,7 @@ export default function Resultpage() {
           style={{
             fontSize: "2rem",
             fontWeight: 700,
-            background: "linear-gradient(90deg, #1f3b6f, #f0c987)",
+            background: "linear-gradient(90deg, #2e5d4f, #a8d5ba)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             fontFamily: "'Kanit', sans-serif",

@@ -24,6 +24,7 @@ export default function EditUserpage() {
   //ฟังก์ดึงชื่อผู้ใช้งาน
   const getuser = async () => {
     try {
+      // `${API_URL}/getuser`
       // "http://localhost:3001/api/getuser"
       const res = await axios.post(`${API_URL}/getuser`);
       if (res.data.success && Array.isArray(res.data.users)) {
@@ -89,15 +90,12 @@ export default function EditUserpage() {
         text: "กรุณากรอกชื่อผู้ใช้, รหัสผ่าน หรือบทบาทใหม่",
       });
     }
-
     const oldName = editingUser.name;
-
     try {
+      // `${API_URL}/updateProfileByAdmin/${oldName}`
       // `http://localhost:3001/api/updateProfileByAdmin/${oldName}`
       const response = await axios.patch(
-        `${
-          import.meta.env.VITE_APP_API_URL
-        }/api/updateProfileByAdmin/${oldName}`,
+        `${API_URL}/updateProfileByAdmin/${oldName}`,
         {
           newName: editName,
           newPassword: editPassword,
@@ -135,9 +133,10 @@ export default function EditUserpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          // `${API_URL}/deleteuser/${id}`
           // `http://localhost:3001/api/deleteuser/${id}`
           const res = await axios.delete(
-            `${import.meta.env.VITE_APP_API_URL}/api/deleteuser/${id}`
+            `${API_URL}/deleteuser/${id}`
           );
           if (res.data.success) {
             Swal.fire("ลบสำเร็จ!", res.data.message, "success");
@@ -172,7 +171,7 @@ export default function EditUserpage() {
       <h1
         className="header-title"
         style={{
-          background: "linear-gradient(90deg, #0d1b2a, #1b4332)",
+          background: "linear-gradient(90deg, #2e5d4f, #a8d5ba)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           fontFamily: "'Kanit', sans-serif",
@@ -225,13 +224,13 @@ export default function EditUserpage() {
                             className="btn btn-primary flex-fill"
                             onClick={() => handleEdit(val)}
                           >
-                            ✏️ แก้ไข
+                            แก้ไข
                           </button>
                           <button
                             className="btn btn-danger flex-fill"
                             onClick={() => handleDelete(val.id, val.name)}
                           >
-                            🗑️ ลบ
+                            ลบ
                           </button>
                         </div>
                       </td>

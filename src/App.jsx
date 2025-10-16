@@ -17,40 +17,33 @@ import Menupage from "./pages/Menu";
 import EditUserpage from "./pages/EditUser";
 
 function MainApp() {
-  // เปลี่ยน App component หลักเป็น MainApp
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const location = useLocation(); // <-- ใช้ useLocation เพื่อดึง Path ปัจจุบัน
+  const location = useLocation();
 
-  // ตรวจสอบว่า Path ปัจจุบันคือ /login หรือไม่
   const isLoginPage = location.pathname === "/login";
 
-  // กำหนด margin-left สำหรับ content
   const contentMargin = isLoginPage ? "0" : sidebarOpen ? "300px" : "0";
-  // กำหนด padding-top สำหรับเนื้อหาหลัก
-  const contentPaddingTop = isLoginPage ? "0" : "70px";
+  const contentPaddingTop = isLoginPage ? "0" : "70px"; // Padding-top สำหรับเว้นพื้นที่ Navbar
 
   return (
     <>
-      {" "}
-      {/* ไม่ใช้ <Router> ที่นี่ เพราะ MainApp ถูกห่อด้วย Router ด้านล่าง */}
-      {/* 1. Sidebar (ซ่อนถ้าเป็นหน้า Login) */}
+      {/* Sidebar ถูกแยกออกจาก div หลักเพื่อให้อยู่ในตำแหน่ง fixed/absolute */}
       {!isLoginPage && <Sidebar isOpen={sidebarOpen} />}
-      {/* Main content container */}
+
+      {/* 🟢 Container หลัก: จัดการ Layout Flexbox */}
       <div
         style={{
-          marginLeft: contentMargin, // ใช้ margin ที่ปรับตามหน้า Login
+          marginLeft: contentMargin,
           transition: "margin-left 0.3s ease",
           display: "flex",
           flexDirection: "column",
-          minHeight: "100vh",
+          minHeight: "100vh", 
         }}
       >
-        {/* 2. Navbar (ซ่อนถ้าเป็นหน้า Login) */}
         {!isLoginPage && (
           <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         )}
 
-        {/* ส่วนเนื้อหา */}
         <div style={{ flex: 1, paddingTop: contentPaddingTop }}>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -83,13 +76,13 @@ function MainApp() {
             />
           </Routes>
         </div>
+
         {!isLoginPage && <Footer />}
       </div>
     </>
   );
 }
 
-// Component App() เดิม ใช้สำหรับห่อ MainApp ด้วย Router
 export default function App() {
   return (
     <Router>

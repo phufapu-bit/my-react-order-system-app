@@ -27,6 +27,7 @@ export default function Login() {
         title: "กรอกข้อมูลให้ครบ",
       });
     }
+    // `${API_URL}/login`
     // "http://localhost:3001/api/login"
     try {
       const response = await axios.post(`${API_URL}/login`, {
@@ -47,6 +48,8 @@ export default function Login() {
             localStorage.setItem("name", name);
             // Save the user's role in localStorage for later use
             localStorage.setItem("role", response.data.role);
+            // **สำคัญ: ลบ guest_tablenum ออกเพื่อให้ถือเป็น Admin/User**
+            localStorage.removeItem("guest_tablenum");
             window.dispatchEvent(new Event("storage"));
 
             Swal.fire({
@@ -54,7 +57,7 @@ export default function Login() {
               title: "Login สำเร็จ!",
               timer: 1500,
               showConfirmButton: false,
-            }).then(() => navigate("/"));
+            }).then(() => navigate("/")); // นำทางไปหน้าหลัก (Dashboard/Resultpage)
           }
         });
       } else {
@@ -73,35 +76,61 @@ export default function Login() {
     }
   };
 
-  //ฟังก์ชันใหม่สำหรับ Guest Login
+  // **ฟังก์ชันใหม่สำหรับ Guest Login ที่รวมการถามหมายเลขโต๊ะ**
   const handleGuestLogin = () => {
-    //ให้สิทธิ์ Guest เป็น 'user' (พนักงาน) เพื่อดูหน้า Order
-    const guestName = "GUEST";
-    const guestRole = "user";
-
+    // 1. ถามหมายเลขโต๊ะจากผู้ใช้
     Swal.fire({
-      title: "เข้าสู่ระบบในฐานะผู้เข้าชม?",
-      icon: "question",
+      title: "กรอกหมายเลขโต๊ะ",
+      input: "text",
+      inputLabel: "โปรดใส่หมายเลขโต๊ะของคุณ (เช่น 1, 15)",
+      inputPlaceholder: "หมายเลขโต๊ะ",
       showCancelButton: true,
-      confirmButtonText: "ใช่, เข้าสู่ระบบ",
-      cancelButtonText: "ไม่",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("name", guestName);
-        localStorage.setItem("role", guestRole); // กำหนด role เป็น 'user' สำหรับ Guest
-        window.dispatchEvent(new Event("storage"));
+      confirmButtonText: "เข้าสู่ระบบ",
+      cancelButtonText: "ยกเลิก",
+      inputValidator: (value) => {
+        const num = parseInt(value);
+        if (!value || isNaN(num) || num <= 0) {
+          return "โปรดใส่หมายเลขโต๊ะที่ถูกต้อง";
+        }
+      },
+    }).then((tableResult) => {
+      if (tableResult.isConfirmed) {
+        const guestTableNum = tableResult.value;
+        const guestName = `GUEST_T${guestTableNum}`; // ชื่อผู้ใช้ GUEST_T1
 
+        // 2. ยืนยันการเข้าสู่ระบบ
         Swal.fire({
-          icon: "info",
-          title: `ยินดีต้อนรับ ${guestName}!`,
-          text: "คุณกำลังใช้งานในโหมดสาธิต",
-          timer: 1500,
-          showConfirmButton: false,
-        }).then(() => navigate("/"));
+          title: `เข้าสู่ระบบโต๊ะที่ ${guestTableNum} ใช่ไหม?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "ใช่, เข้าสู่ระบบ",
+          cancelButtonText: "ไม่",
+        }).then((loginResult) => {
+          if (loginResult.isConfirmed) {
+            // 3. บันทึกข้อมูลที่สำคัญสำหรับ Guest
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("name", guestName);
+            // บันทึกหมายเลขโต๊ะ: IMPORTANT for Resultpage.jsx logic
+            localStorage.setItem("guest_tablenum", guestTableNum);
+
+            // ลบ role ออกเพื่อให้ Resultpage.jsx รู้ว่าเป็น Guest
+            localStorage.removeItem("role");
+
+            window.dispatchEvent(new Event("storage"));
+
+            Swal.fire({
+              icon: "info",
+              title: `ยินดีต้อนรับสู่โต๊ะที่ ${guestTableNum}!`,
+              text: "กรุณาสั่งอาหารและเครื่องดื่ม",
+              timer: 1500,
+              showConfirmButton: false,
+            }).then(() => navigate("/Orderpage")); // นำ Guest ไปหน้าสั่งอาหาร
+          }
+        });
       }
     });
   };
+  // **สิ้นสุดฟังก์ชัน Guest Login ที่ปรับปรุง**
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -112,7 +141,8 @@ export default function Login() {
       });
     }
 
-    // http://localhost:3001/api/register
+    // `${API_URL}/register`
+    // "http://localhost:3001/api/register"
     try {
       const response = await axios.post(`${API_URL}/register`, {
         name,
@@ -187,6 +217,7 @@ export default function Login() {
               onChange={(e) => setName(e.target.value.toUpperCase())}
               placeholder="กรุณาใส่ชื่อผู้ใช้งาน"
               autoFocus
+            //   disabled
               onKeyDown={(e) => {
                 if (e.key === "Enter")
                   isRegistering ? handleRegister(e) : handleSubmit(e);
@@ -201,6 +232,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="กรุณาใส่รหัสผู้ใช้งาน"
+                // disabled
                 onKeyDown={(e) => {
                   if (e.key === "Enter")
                     isRegistering ? handleRegister(e) : handleSubmit(e);
@@ -257,6 +289,7 @@ export default function Login() {
             letterSpacing: "0.5px",
             fontSize: "20px",
           }}
+        //   disabled
         >
           {isRegistering ? "ลงทะเบียน" : "เข้าสู่ระบบ"}
         </button>
@@ -272,7 +305,7 @@ export default function Login() {
               fontSize: "20px",
             }}
           >
-            เข้าสู่ระบบในฐานะ Guest
+            ทดลองใช้งาน
           </button>
         )}
 
@@ -286,7 +319,7 @@ export default function Login() {
               setPassword("");
               setRole(null);
             }}
-            disabled={true}
+            disabled={true} // disable การลงทะเบียนเพื่อให้มีเฉพาะ Admin ทำเท่านั้น
             style={{ fontFamily: "'Kanit', sans-serif" }}
           >
             {isRegistering
