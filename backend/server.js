@@ -382,7 +382,7 @@ app.delete("/api/deleteuser/:id", async (req, res) => {
 
 //---
 ////////////TiDB data base ///////////////////
-POST /api/register (โค้ดเดิมที่ถูกต้องแล้ว)
+// POST /api/register (โค้ดเดิมที่ถูกต้องแล้ว)
 app.post("/api/register", async (req, res) => {
   const { name, password, role } = req.body;
 
