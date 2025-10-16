@@ -339,17 +339,14 @@ export default function Orderpage() {
           const finalTablenum = isTakeaway ? "TAKEAWAY" : tablenum;
           // `${API_URL}/updateOrder`
           // "http://localhost:3001/api/updateOrder"
-          const response = await axios.patch(
-            `${API_URL}/updateOrder`,
-            {
-              id, // id นี้คือ id ของรายการใน Database (orders)
-              tablenum: finalTablenum,
-              listorder: listorder.value,
-              qty: parseInt(qty),
-              price,
-              total_price: totalPrice,
-            }
-          );
+          const response = await axios.patch(`${API_URL}/updateOrder`, {
+            id, // id นี้คือ id ของรายการใน Database (orders)
+            tablenum: finalTablenum,
+            listorder: listorder.value,
+            qty: parseInt(qty),
+            price,
+            total_price: totalPrice,
+          });
 
           if (response.data.success) {
             Swal.fire({
@@ -420,12 +417,9 @@ export default function Orderpage() {
         // `${API_URL}/completeOrder`
         // "http://localhost:3001/api/completeOrder"
         try {
-          const response = await axios.patch(
-            `${API_URL}/completeOrder`,
-            {
-              id,
-            }
-          );
+          const response = await axios.patch(`${API_URL}/completeOrder`, {
+            id,
+          });
           if (response.data.success) {
             if (response.data.clearGuestSession) {
               const tablenum = response.data.tablenum || "ไม่ทราบโต๊ะ";
@@ -852,14 +846,13 @@ export default function Orderpage() {
                     </th>
 
                     {/* 3. คอลัมน์ว่าง (จำนวน, ราคา/หน่วย, ราคารวม) - ใช้ colSpan="3" */}
-                    <th className="p-1" colSpan="3">
-                      {/* ไม่มี Input filter ในคอลัมน์เหล่านี้ */}
-                      <span className="text-muted" style={{ fontSize: "16px" }}>
+                    {/* <th className="p-1" colSpan="3">
+                      <span className="text-white" style={{ fontSize: "16px" }}>
                         แสดง {filteredOrders?.length || 0} รายการ
                       </span>
-                    </th>
+                    </th> */}
 
-                    {/* 4. 🟢 Filter: วันที่/เวลา (ใช้ 1 คอลัมน์) */}
+                    {/* 4. Filter: วันที่/เวลา (ใช้ 1 คอลัมน์) */}
                     <th className="p-1">
                       <div className="d-flex flex-column gap-2">
                         {/* ใช้ flex-column เพื่อวาง Input ซ้อนกัน */}
