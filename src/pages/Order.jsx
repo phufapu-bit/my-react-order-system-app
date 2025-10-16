@@ -846,11 +846,11 @@ export default function Orderpage() {
                     </th>
 
                     {/* 3. คอลัมน์ว่าง (จำนวน, ราคา/หน่วย, ราคารวม) - ใช้ colSpan="3" */}
-                    {/* <th className="p-1" colSpan="3">
-                      <span className="text-white" style={{ fontSize: "16px" }}>
+                    <th className="p-1" colSpan="3">
+                      {/* <span className="text-white" style={{ fontSize: "16px" }}>
                         แสดง {filteredOrders?.length || 0} รายการ
-                      </span>
-                    </th> */}
+                      </span> */}
+                    </th>
 
                     {/* 4. Filter: วันที่/เวลา (ใช้ 1 คอลัมน์) */}
                     <th className="p-1">
