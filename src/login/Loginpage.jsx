@@ -218,7 +218,7 @@ export default function Login() {
               onChange={(e) => setName(e.target.value.toUpperCase())}
               placeholder="กรุณาใส่ชื่อผู้ใช้งาน"
               autoFocus
-              disabled
+              // disabled
               onKeyDown={(e) => {
                 if (e.key === "Enter")
                   isRegistering ? handleRegister(e) : handleSubmit(e);
@@ -233,7 +233,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="กรุณาใส่รหัสผู้ใช้งาน"
-                disabled
+                // disabled
                 onKeyDown={(e) => {
                   if (e.key === "Enter")
                     isRegistering ? handleRegister(e) : handleSubmit(e);
@@ -291,7 +291,7 @@ export default function Login() {
             fontSize: "20px",
             // display: "none",
           }}
-            disabled
+            // disabled
         >
           {isRegistering ? "ลงทะเบียน" : "เข้าสู่ระบบ"}
         </button>

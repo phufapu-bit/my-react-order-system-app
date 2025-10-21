@@ -9,6 +9,8 @@ import editIcon from "../assets/images/edit.png";
 
 export default function Orderpage() {
   const [tablenum, setTablenum] = useState("");
+  const [takeawayInput, setTakeawayInput] = useState(""); // State สำหรับรหัสออเดอร์กลับบ้านที่ไม่ซ้ำกัน
+  const [takeawayCounter, setTakeawayCounter] = useState(1);
   const [filterTableNum, setFilterTableNum] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -107,18 +109,26 @@ export default function Orderpage() {
     }
   };
 
-  //NEW FUNCTION: จัดการการเปลี่ยนแปลงสถานะ Takeaway
+  const generateNextTakeawayId = (currentCounter) => {
+    // Format the number with leading zeros (e.g., TW-1)
+    const formattedNumber = String(currentCounter).padStart(0, "0");
+    return `TW-${formattedNumber}`;
+  };
+
+  //จัดการการเปลี่ยนแปลงสถานะ Takeaway
   const handleTakeawayToggle = (e) => {
     const isChecked = e.target.checked;
     setIsTakeaway(isChecked);
 
     if (isChecked) {
-      // ถ้าเลือก Takeaway ให้กำหนดเลขโต๊ะเป็นค่าพิเศษ
-      setTablenum("TAKEAWAY");
+      setTablenum("");
+      const newId = generateNextTakeawayId(takeawayCounter);
+      setTakeawayInput(newId);
     }
     // ถ้าเปลี่ยนกลับ และไม่ใช่ Guest ที่มี tablenum อยู่แล้ว ให้ล้างเลขโต๊ะ
-    else if (!isGuest && tablenum === "TAKEAWAY") {
+    else {
       setTablenum("");
+      setTakeawayInput("");
     }
   };
 
@@ -131,6 +141,7 @@ export default function Orderpage() {
     setCartIndexToEdit(null);
     // รีเซ็ตสถานะ Takeaway
     setIsTakeaway(false);
+    setTakeawayInput("");
 
     // การจัดการเลขโต๊ะ: ถ้าเป็น Guest ให้รีเซ็ตกลับไปเป็นค่าเดิม
     if (isGuest && guestTablenum) {
@@ -143,7 +154,7 @@ export default function Orderpage() {
   //  ฟังก์ชันเพิ่มลงตะกร้า (Add to Cart)
   const handleAddToCart = () => {
     //  ตรวจสอบว่าต้องมี tablenum หรือเป็น Takeaway
-    if (!listorder || !qty || (!tablenum && !isTakeaway)) {
+    if (!listorder || !qty) {
       return Swal.fire({
         icon: "warning",
         title: "กรอกข้อมูลให้ครบ",
@@ -151,8 +162,24 @@ export default function Orderpage() {
       });
     }
 
-    // 💡 Logic: ถ้าเป็น Takeaway ให้ใช้ "TAKEAWAY" เป็น tablenum
-    const finalTablenum = isTakeaway ? "TAKEAWAY" : tablenum;
+    // Check if tablenum/takeawayInput is filled
+    if (!isTakeaway && !tablenum) {
+      return Swal.fire({
+        icon: "warning",
+        title: "กรอกข้อมูลให้ครบ",
+        text: "โปรดระบุ 'โต๊ะที่'",
+      });
+    } else if (isTakeaway && !takeawayInput) {
+      // กรณีนี้ไม่ควรเกิดขึ้นถ้าใช้รหัสอัตโนมัติ แต่เพิ่มไว้เป็น Fallback
+      return Swal.fire({
+        icon: "warning",
+        title: "กรอกข้อมูลให้ครบ",
+        text: "โปรดระบุ 'รหัสออเดอร์กลับบ้าน'",
+      });
+    }
+
+    //Logic: ถ้าเป็น Takeaway ให้ใช้ "TAKEAWAY" เป็น tablenum
+    const finalTablenum = isTakeaway ? takeawayInput.toUpperCase() : tablenum;
 
     const selectedMenuItem = menuList.find(
       (item) => item.ordername === listorder.value
@@ -194,7 +221,7 @@ export default function Orderpage() {
     if (cart.length === 0) return;
 
     //การจัดการ Guest Session: ไม่ควรเซ็ต/เคลียร์ guest_tablenum ถ้าเป็น Takeaway
-    if (isGuest && tablenum && tablenum !== "TAKEAWAY") {
+    if (isGuest && tablenum) {
       localStorage.setItem("guest_tablenum", tablenum);
     }
 
@@ -212,22 +239,24 @@ export default function Orderpage() {
         timer: 1200,
         showConfirmButton: false,
       }).then(() => {
+        if (isTakeaway) {
+          setTakeawayCounter((prev) => prev + 1);
+        }
+
         setCart([]); // ล้างตะกร้าเมื่อสั่งซื้อสำเร็จ
         getListorder(); // รีเฟรชรายการออเดอร์ในตารางด้านล่าง
 
         // Logic นำทางและล้างฟอร์ม:
-        if (isGuest && tablenum !== "TAKEAWAY") {
+        if (isGuest && !isTakeaway) {
           navigate("/resultpage"); // Guest (ที่นั่งโต๊ะ) ไปหน้าดูสถานะ
-          setListorder(null);
-          setQty(1);
         } else {
           // Admin/User หรือ Guest ที่เป็น TAKEAWAY ล้างฟอร์ม
-          setTablenum(isTakeaway ? "TAKEAWAY" : "");
-          //ล้างสถานะ Takeaway
+          setTablenum("");
           setIsTakeaway(false);
-          setListorder(null);
-          setQty(1);
+          setTakeawayInput("");
         }
+        setListorder(null);
+        setQty(1);
       });
     } catch (error) {
       console.error("Error confirming order:", error);
@@ -237,23 +266,21 @@ export default function Orderpage() {
 
   //ฟังก์ชันดึงข้อมูลไปแก้ไข (ใช้สำหรับทั้ง orders และ cart)
   const handleEdit = (item, index = null) => {
-    // 1. ตั้งค่า State สำหรับฟอร์ม
+    const isTakeawayOrder =
+      item.tablenum.startsWith("TW-") || item.tablenum.includes("-");
     setId(item.id || null); // id จะมีค่าเฉพาะถ้ามาจากตาราง orders
-    setTablenum(item.tablenum);
+    setTablenum(isTakeawayOrder ? "" : item.tablenum);
+    setTakeawayInput(isTakeawayOrder ? item.tablenum : "");
 
     //ตั้งค่า isTakeaway ตามค่า tablenum
-    setIsTakeaway(item.tablenum === "TAKEAWAY");
+    setIsTakeaway(isTakeawayOrder);
 
     const selectedOption = menuOptions.find(
       (option) => option.value === item.listorder
     );
     setListorder(selectedOption);
     setQty(item.qty);
-
-    // 2. ตั้งค่าโหมดแก้ไข
     setIsEditing(true);
-
-    // 3. ตั้งค่า Index ในตะกร้า (ถ้ามาจากตะกร้า)
     setCartIndexToEdit(index);
   };
 
@@ -266,6 +293,15 @@ export default function Orderpage() {
         icon: "warning",
         title: "ข้อมูลไม่สมบูรณ์",
         text: "ไม่สามารถอัปเดตรายการในตะกร้าได้",
+      });
+    }
+
+    // Check for Takeaway ID update
+    if (isTakeaway && !takeawayInput) {
+      return Swal.fire({
+        icon: "warning",
+        title: "ข้อมูลไม่สมบูรณ์",
+        text: "โปรดระบุ 'รหัสออเดอร์กลับบ้าน'",
       });
     }
 
@@ -286,8 +322,9 @@ export default function Orderpage() {
     const totalPrice = price * qty;
 
     // 3. สร้าง Object รายการที่แก้ไขใหม่
+    const finalTablenum = isTakeaway ? takeawayInput.toUpperCase() : tablenum;
     const updatedItem = {
-      tablenum, // 💡 ใช้ tablenum ที่ถูกตั้งค่าแล้ว (อาจเป็น "TAKEAWAY" หรือเลขโต๊ะ)
+      tablenum: finalTablenum,
       listorder: listorder.value,
       qty: parseInt(qty),
       price: price,
@@ -312,9 +349,15 @@ export default function Orderpage() {
   };
 
   const handleUpdateOrder = async () => {
-    // 💡 การแก้ไขรายการใน DB จะยังคงใช้ tablenum ที่ถูกดึงมาตอนแรก
+    // การแก้ไขรายการใน DB จะยังคงใช้ tablenum ที่ถูกดึงมาตอนแรก
     if (cartIndexToEdit !== null || id === null) return;
-
+    if (isTakeaway && !takeawayInput) {
+      return Swal.fire({
+        icon: "warning",
+        title: "ข้อมูลไม่สมบูรณ์",
+        text: "โปรดระบุ 'รหัสออเดอร์กลับบ้าน'",
+      });
+    }
     Swal.fire({
       title: "คุณต้องการแก้ไขออเดอร์ใช่ไหม?",
       icon: "question",
@@ -335,8 +378,10 @@ export default function Orderpage() {
           const price = selectedMenuItem.price;
           const totalPrice = price * qty;
 
-          // 💡 ตรวจสอบ: ถ้า isTakeaway เป็นจริง ต้องให้แน่ใจว่า tablenum ยังคงเป็น "TAKEAWAY"
-          const finalTablenum = isTakeaway ? "TAKEAWAY" : tablenum;
+          // ตรวจสอบ: ถ้า isTakeaway เป็นจริง ต้องให้แน่ใจว่า tablenum ยังคงเป็น "TAKEAWAY"
+          const finalTablenum = isTakeaway
+            ? takeawayInput.toUpperCase()
+            : tablenum;
           // `${API_URL}/updateOrder`
           // "http://localhost:3001/api/updateOrder"
           const response = await axios.patch(`${API_URL}/updateOrder`, {
@@ -404,50 +449,80 @@ export default function Orderpage() {
     });
   };
 
-  const handleComplete = async (id) => {
+  const handleDone = async (id) => {
     Swal.fire({
-      title: "เสร็จสิ้นออเดอร์นี้ใช่หรือไม่?",
-      text: "ออเดอร์นี้จะถูกบันทึกเป็นยอดขาย",
+      title: "รายการนี้ทำเสร็จแล้วใช่หรือไม่?",
+      text: "สถานะจะเปลี่ยนเป็น 'Done' (พร้อมชำระเงิน)",
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "ใช่, เสร็จสิ้น",
       cancelButtonText: "ยกเลิก",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // `${API_URL}/completeOrder`
-        // "http://localhost:3001/api/completeOrder"
+        // "http://localhost:3001/api/doneOrder"
+        // `${API_URL}/doneOrder`
         try {
-          const response = await axios.patch(`${API_URL}/completeOrder`, {
+          const response = await axios.patch(`${API_URL}/doneOrder`, {
             id,
           });
           if (response.data.success) {
-            if (response.data.clearGuestSession) {
-              const tablenum = response.data.tablenum || "ไม่ทราบโต๊ะ";
-              localStorage.removeItem("guest_tablenum");
-              Swal.fire({
-                icon: "success",
-                title: `โต๊ะ ${tablenum} เสร็จสิ้นทั้งหมด!`,
-                text: "ออเดอร์ทั้งหมดของโต๊ะนี้ถูกล้างสถานะ Guest แล้ว",
-                timer: 2000,
-                showConfirmButton: false,
-              }).then(() => getListorder());
-            } else {
-              Swal.fire({
-                icon: "success",
-                title: "ออเดอร์เสร็จสิ้น!",
-                timer: 1000,
-                showConfirmButton: false,
-              }).then(() => getListorder());
-            }
+            Swal.fire({
+              icon: "success",
+              title: "อัปเดตเป็นเสร็จสิ้น (Done)!",
+              timer: 1000,
+              showConfirmButton: false,
+            }).then(() => getListorder());
           } else {
             Swal.fire({
               icon: "error",
-              title: "ไม่สามารถเสร็จสิ้นออเดอร์",
+              title: "ไม่สามารถอัปเดตสถานะ",
               text: response.data.message || "เกิดข้อผิดพลาดในการอัปเดต",
             });
           }
         } catch (error) {
           console.error(error);
+          Swal.fire({
+            icon: "error",
+            title: "เกิดข้อผิดพลาด",
+            text: "ไม่สามารถเชื่อมต่อ Server ได้",
+          });
+        }
+      }
+    });
+  };
+
+  const handlePaymentAndComplete = async (id) => {
+    Swal.fire({
+      title: `รับชำระเงินโต๊ะ/ออเดอร์ ${tablenum} ใช่หรือไม่?`,
+      text: "รายการทั้งหมดของชุดนี้จะถูกบันทึกเป็นยอดขาย",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "ใช่, รับชำระเงิน",
+      cancelButtonText: "ยกเลิก",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        // `${API_URL}/completeTableOrders`
+        // "http://localhost:3001/api/completeTableOrders"
+        try {
+          const response = await axios.patch(`${API_URL}/completeTableOrders`, {
+            tablenum: tablenum,
+          });
+          if (response.data.success) {
+            Swal.fire({
+              icon: "success",
+              title: `โต๊ะ/ออเดอร์ ${tablenum} ชำระเงินเสร็จสิ้น!`,
+              timer: 1500,
+              showConfirmButton: false,
+            }).then(() => getListorder()); // Refresh list
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "ไม่สามารถอัปเดตสถานะ",
+              text: response.data.message || "เกิดข้อผิดพลาดในการอัปเดต",
+            });
+          }
+        } catch (error) {
+          console.error("Error completing table order:", error);
           Swal.fire({
             icon: "error",
             title: "เกิดข้อผิดพลาด",
@@ -467,17 +542,14 @@ export default function Orderpage() {
 
   const handleClearContent = () => {
     // ถ้าเป็น Takeaway ให้ล้างแค่รายการ
-    if (isTakeaway) {
-      setListorder(null);
-    } else {
-      setTablenum("");
-      setListorder(null);
-    }
+    setListorder(null);
+    setTablenum("");
+    setTakeawayInput("");
   };
 
   const handleClearContentGuest = () => {
-    // 💡 สำหรับ Guest ล้างแค่รายการ
     setListorder(null);
+    setTakeawayInput("");
   };
 
   useEffect(() => {
@@ -491,6 +563,33 @@ export default function Orderpage() {
       setIsGuest(false);
     }
   }, []);
+
+  const incompleteOrders = orders.filter(
+    (order) => order.status !== "completed"
+  );
+
+  const tablesToPayMap = incompleteOrders.reduce((acc, order) => {
+    const tableKey = order.tablenum;
+    if (!acc[tableKey]) {
+      acc[tableKey] = {
+        tablenum: tableKey,
+        totalAmount: 0,
+        items: [],
+      };
+    }
+    const totalPrice = parseFloat(order.total_price) || 0;
+    const pricePerUnit = parseFloat(order.price) || 0;
+
+    acc[tableKey].totalAmount += totalPrice;
+    acc[tableKey].items.push({
+      listorder: order.listorder,
+      qty: order.qty,
+      price: pricePerUnit,
+    });
+    return acc;
+  }, {});
+
+  const tablesToPay = Object.values(tablesToPayMap);
 
   return (
     <div className="container-fluid">
@@ -529,8 +628,8 @@ export default function Orderpage() {
       >
         <h3 className="text-primary mb-3">
           รายการอาหาร
-          {tablenum === "TAKEAWAY" ? (
-            <span className="text-info">สั่งกลับบ้าน </span>
+          {isTakeaway ? (
+            <span className="text-info">ออเดอร์กลับบ้าน: {takeawayInput} </span>
           ) : (
             `โต๊ะที่ ${tablenum}`
           )}
@@ -596,6 +695,84 @@ export default function Orderpage() {
           </div>
         )}
       </div>
+
+      {(ROLE === "admin" || ROLE === "user") && tablesToPay.length > 0 && (
+        <div className="alert alert-warning shadow-sm mt-3 p-3">
+          <h4 className="alert-heading">
+            <i className="fas fa-money-bill-wave me-2"></i>{" "}
+            ออเดอร์ที่รอลูกค้าชำระเงิน
+          </h4>
+          <p>
+            มีโต๊ะ/ออเดอร์ที่ยังไม่ชำระเงินทั้งหมด:{" "}
+            <strong>{tablesToPay.length}</strong> รายการ
+          </p>
+          <hr />
+          <div className="d-flex flex-wrap gap-3 justify-content-start">
+            {tablesToPay.map((tableSummary) => (
+              <div
+                key={tableSummary.tablenum}
+                className="card shadow-sm"
+                // เน้นด้วย Border ซ้ายสีส้ม
+                style={{ width: "18rem", borderLeft: "5px solid #ffc107" }}
+              >
+                <div className="card-body p-3">
+                  <h5 className="card-title mb-1">
+                    {tableSummary.tablenum.startsWith("TW-") ||
+                    tableSummary.tablenum.includes("-") ? (
+                      <>
+                        <i className="fas fa-shopping-bag me-1 text-info"></i>
+                        ออเดอร์กลับบ้าน: {tableSummary.tablenum}
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-utensils me-1 text-info"></i>
+                        โต๊ะที่ {tableSummary.tablenum}
+                      </>
+                    )}
+                  </h5>
+                  {/* แสดงยอดรวม */}
+                  <p className="card-text fw-bold text-success display-6 mb-2 mt-2 border-bottom pb-1">
+                    ฿{tableSummary.totalAmount.toFixed(2)}
+                  </p>
+
+                  <h6 className="card-subtitle mb-2 text-muted">
+                    รายการ ({tableSummary.items.length} ชิ้น):
+                  </h6>
+
+                  {/* แสดงรายการอาหาร */}
+                  <ul
+                    className="list-group list-group-flush mb-3 overflow-auto"
+                    style={{ maxHeight: "150px" }}
+                  >
+                    {tableSummary.items.map((item, itemIndex) => (
+                      <li
+                        key={itemIndex}
+                        className="list-group-item p-1 d-flex justify-content-between"
+                        style={{ fontSize: "14px", border: "none" }}
+                      >
+                        <span>{item.listorder}</span>
+                        <span className="fw-bold text-end">
+                          {item.qty} x ฿{item.price.toFixed(2)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    className="btn btn-primary w-100"
+                    onClick={() =>
+                      handlePaymentAndComplete(tableSummary.tablenum)
+                    }
+                  >
+                    <i className="fas fa-money-bill-wave me-1"></i>
+                    รับชำระเงิน
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card shadow">
         <div
@@ -673,16 +850,21 @@ export default function Orderpage() {
 
             <div className="row g-4">
               <div className="col-md-2 my-5">
-                <h4>โต๊ะที่</h4>
+                <h4>{isTakeaway ? <>รหัสออเดอร์กลับบ้าน</> : <>โต๊ะที่</>}</h4>
                 <input
                   style={{ fontSize: "20px" }}
                   type="text"
                   className="form-control"
-                  placeholder="โต๊ะที่"
-                  value={tablenum}
-                  // 💡 ถ้าเป็น Guest, กำลังแก้ไข, หรือเป็น Takeaway ห้ามแก้ไขเลขโต๊ะ
-                  disabled={isGuest || isEditing || isTakeaway}
-                  onChange={(e) => setTablenum(e.target.value.toUpperCase())}
+                  placeholder={isTakeaway ? "รหัส TW-XXX" : "โต๊ะที่"}
+                  value={isTakeaway ? takeawayInput : tablenum}
+                  onChange={(e) =>
+                    isTakeaway
+                      ? setTakeawayInput(e.target.value.toUpperCase())
+                      : setTablenum(e.target.value.toUpperCase())
+                  }
+                  disabled={
+                    (isGuest && !isTakeaway) || (isTakeaway && !isEditing)
+                  }
                 />
               </div>
               <div className="col-md-4 my-5">
@@ -690,13 +872,26 @@ export default function Orderpage() {
                 <Select
                   options={menuOptions}
                   value={listorder}
+                  isClearable={true}
                   onChange={(selectedOption) => setListorder(selectedOption)}
                   placeholder="เลือกรายการอาหาร"
                   styles={{
-                    control: (base) => ({ ...base, fontSize: "20px" }),
-                    menu: (base) => ({ ...base, zIndex: 2000 }),
+                    control: (base) => ({
+                      ...base,
+                      fontSize: "20px",
+                      width: "100%",
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      zIndex: 9999,
+                    }),
+                    menuList: (base) => ({
+                      ...base,
+                      maxHeight: "170px",
+                      fontSize: "20px",
+                      overflowY: "auto",
+                    }),
                   }}
-                  // อนุญาตให้แก้ไขได้ในทุกกรณี (ถ้าเป็นรายการที่กำลังทำอยู่)
                 />
               </div>
               <div className="col-md-2 my-5">
@@ -785,7 +980,7 @@ export default function Orderpage() {
             <div className="table-container">
               <table
                 className="table table-bordered table-striped"
-                style={{ fontSize: "20px" }}
+                style={{ fontSize: "18px" }}
               >
                 <thead
                   className="table-dark"
@@ -793,12 +988,12 @@ export default function Orderpage() {
                 >
                   {/* 1. แถวชื่อคอลัมน์หลัก */}
                   <tr>
-                    <th>โต๊ะที่</th>
+                    <th>โต๊ะ</th>
                     <th>อาหาร</th>
                     <th>จำนวน</th>
                     <th>ราคา/หน่วย</th>
                     <th>ราคารวม</th>
-                    <th>วันที่/เวลา</th>
+                    <th style={{ width: "400px" }}>วันที่/เวลา</th>
                     <th>จัดการ</th>
                   </tr>
 
@@ -834,49 +1029,51 @@ export default function Orderpage() {
                             fontSize: "16px",
                             width: "100%",
                             fontWeight: "400",
-                            minHeight: "38px", // เพิ่ม minHeight เพื่อความสม่ำเสมอ
                           }),
                           menu: (base) => ({
                             ...base,
                             zIndex: 2000,
                             fontWeight: "400",
                           }),
+                          menuList: (base) => ({
+                            ...base,
+                            maxHeight: "300px",
+                            fontSize: "16px",
+                            overflowY: "auto",
+                          }),
                         }}
                       />
                     </th>
 
                     {/* 3. คอลัมน์ว่าง (จำนวน, ราคา/หน่วย, ราคารวม) - ใช้ colSpan="3" */}
-                    <th className="p-1" colSpan="3">
-                      {/* <span className="text-white" style={{ fontSize: "16px" }}>
-                        แสดง {filteredOrders?.length || 0} รายการ
-                      </span> */}
-                    </th>
+                    <th className="p-1" colSpan="3"></th>
 
                     {/* 4. Filter: วันที่/เวลา (ใช้ 1 คอลัมน์) */}
                     <th className="p-1">
-                      <div className="d-flex flex-column gap-2">
-                        {/* ใช้ flex-column เพื่อวาง Input ซ้อนกัน */}
-                        <div className="row">
-                          <div className="col-6">
-                            <input
-                              type="date"
-                              className="form-control form-control-sm"
-                              value={startDate}
-                              onChange={(e) => setStartDate(e.target.value)}
-                              style={{ fontSize: "16px", height: "38px" }}
-                              title="จากวันที่"
-                            />
-                          </div>
-                          <div className="col-6">
-                            <input
-                              type="date"
-                              className="form-control form-control-sm"
-                              value={endDate}
-                              onChange={(e) => setEndDate(e.target.value)}
-                              style={{ fontSize: "16px", height: "38px" }}
-                              title="ถึงวันที่"
-                            />
-                          </div>
+                      {/* ใช้ flex-column เพื่อวาง Input ซ้อนกัน */}
+                      <div className="row g-1 align-items-center">
+                        <div className="col-5">
+                          <input
+                            type="date"
+                            className="form-control form-control-sm"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            style={{ fontSize: "16px", height: "38px" }}
+                            title="จากวันที่"
+                          />
+                        </div>
+                        <div className="col-2 text-center">
+                          <label className="m-0">ถึง</label>
+                        </div>
+                        <div className="col-5">
+                          <input
+                            type="date"
+                            className="form-control form-control-sm"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            style={{ fontSize: "16px", height: "38px" }}
+                            title="ถึงวันที่"
+                          />
                         </div>
                       </div>
                     </th>
@@ -904,83 +1101,89 @@ export default function Orderpage() {
                 </thead>
                 <tbody>
                   {filteredOrders && filteredOrders.length > 0 ? (
-                    filteredOrders.map((order, i) => (
-                      <tr
-                        key={order.id || i}
-                        // 💡 เน้นรายการสั่งกลับบ้าน
-                        className={
-                          order.tablenum === "TAKEAWAY" ? "table-info" : ""
-                        }
-                      >
-                        <td>
-                          {/* 💡 แสดงข้อความพิเศษสำหรับ Takeaway */}
-                          <span
-                            className={
-                              order.tablenum === "TAKEAWAY"
-                                ? "fw-bold text-primary"
-                                : ""
-                            }
-                          >
-                            {order.tablenum === "TAKEAWAY"
-                              ? "TAKEAWAY"
-                              : order.tablenum}
-                          </span>
-                        </td>
-                        <td>{order.listorder}</td>
-                        <td>{order.qty}</td>
-                        <td>{order.price || "N/A"}</td>
-                        <td>{order.total_price || 0}</td>
-                        <td>
-                          {order.update_at
-                            ? new Date(order.update_at).toLocaleString(
-                                "th-TH",
-                                {
-                                  year: "numeric",
-                                  month: "2-digit",
-                                  day: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  second: "2-digit",
-                                }
-                              )
-                            : ""}
-                        </td>
-                        <td>
-                          {order.status !== "completed" ? (
-                            <div className="d-flex gap-2">
-                              {/* ปุ่มเสร็จสิ้น */}
-                              {!isGuest ? (
-                                <button
-                                  className="btn btn-success flex-fill"
-                                  onClick={() => handleComplete(order.id)}
-                                >
-                                  เสร็จสิ้น
-                                </button>
-                              ) : null}
+                    filteredOrders.map((order) => {
+                      const tableStatusClass =
+                        order.status === "completed"
+                          ? "table-success"
+                          : order.status === "done"
+                          ? "table-warning" // Highlight 'done' status
+                          : "";
 
-                              {/* ปุ่มแก้ไข */}
-                              <button
-                                className="btn btn-primary flex-fill"
-                                onClick={() => handleEdit(order)}
-                              >
-                                แก้ไข
-                              </button>
+                      const isDoneOrCompleted =
+                        order.status === "done" || order.status === "completed";
 
-                              <button
-                                className="btn btn-danger flex-fill"
-                                onClick={() => handleDelete(order.id)}
-                              >
-                                ลบ
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-success fw-bold d-flex justify-content-center align-items-center">
-                              เสร็จสิ้นแล้ว
+                      return (
+                        <tr key={order.id} className={tableStatusClass}>
+                          <td>
+                            <span
+                              className={
+                                order.tablenum.startsWith("TW-") || order.tablenum.includes("-")
+                                  ? "fw-bold text-primary"
+                                  : ""
+                              }
+                            >
+                              {order.tablenum}
                             </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td>{order.listorder}</td>
+                          <td>{order.qty}</td>
+                          <td>{order.price || "N/A"}</td>
+                          <td>{order.total_price || 0}</td>
+                          <td>
+                            {order.update_at
+                              ? new Date(order.update_at).toLocaleString(
+                                  "th-TH",
+                                  {
+                                    year: "numeric",
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    second: "2-digit",
+                                  }
+                                )
+                              : ""}
+                          </td>
+                          <td>
+                            {order.status !== "completed" ? (
+                              <div className="d-flex gap-2">
+                                {/* ปุ่มเสร็จสิ้น */}
+                                {order.status !== "done" && (
+                                  <button
+                                    className="btn btn-success flex-fill"
+                                    onClick={() => handleDone(order.id)}
+                                    disabled={isEditing}
+                                  >
+                                    เสร็จสิ้น
+                                  </button>
+                                )}
+
+                                {/* ปุ่มแก้ไข */}
+                                <button
+                                  className="btn btn-primary flex-fill"
+                                  onClick={() => handleEdit(order)}
+                                  disabled={isDoneOrCompleted}
+                                >
+                                  แก้ไข
+                                </button>
+
+                                <button
+                                  className="btn btn-danger flex-fill"
+                                  onClick={() => handleDelete(order.id)}
+                                  disabled={isDoneOrCompleted}
+                                >
+                                  ลบ
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-success fw-bold d-flex justify-content-center align-items-center">
+                                เสร็จสิ้นแล้ว
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       {/* ปรับ colSpan เป็น 7 ตามจำนวนคอลัมน์รวม */}

@@ -20,6 +20,7 @@ import {
 
 export default function Resultpage() {
   const [salesData, setSalesData] = useState([]);
+  const [filteredSalesData, setFilteredSalesData] = useState([]);
   const [guestOrders, setGuestOrders] = useState([]);
   const [todayOrders, setTodayOrders] = useState(0);
   const [totalSales, setTotalSales] = useState(0);
@@ -45,6 +46,26 @@ export default function Resultpage() {
     });
   };
 
+  const filterSalesData = (data, start, end) => {
+    if (!start || !end) {
+      return data; // ถ้าไม่มีการระบุช่วงวันที่ ให้แสดงทั้งหมด
+    }
+
+    const startTime = new Date(start).setHours(0, 0, 0, 0);
+    // เพิ่ม 1 วันใน endDate เพื่อให้รวมวันที่สิ้นสุด
+    const endObj = new Date(end);
+    endObj.setDate(endObj.getDate() + 1);
+    const endTime = endObj.setHours(0, 0, 0, 0);
+
+    return data.filter((item) => {
+      // item.update_at คือวันที่ในรูปแบบ 'YYYY-MM-DD' จาก backend
+      const itemDate = new Date(item.update_at).setHours(0, 0, 0, 0);
+      if (isNaN(itemDate)) return false;
+
+      // เปรียบเทียบวันที่
+      return itemDate >= startTime && itemDate < endTime;
+    });
+  };
 
   const fetchSalesSummary = async () => {
     // `${API_URL}/getSalesSummary`
@@ -65,9 +86,7 @@ export default function Resultpage() {
     // `${API_URL}/getPendingOrderCount`
     // "http://localhost:3001/api/getPendingOrderCount"
     try {
-      const res = await axios.post(
-        `${API_URL}/getPendingOrderCount`
-      );
+      const res = await axios.post(`${API_URL}/getPendingOrderCount`);
       if (res.data.success) {
         setPendingCount(res.data.pendingCount || 0);
       }
@@ -76,7 +95,6 @@ export default function Resultpage() {
     }
   };
 
-
   const fetchSalesData = async () => {
     // `${API_URL}/getDailySales`
     // "http://localhost:3001/api/getDailySales"
@@ -84,10 +102,14 @@ export default function Resultpage() {
       const res = await axios.post(`${API_URL}/getDailySales`);
       if (res.data.success) {
         setSalesData(res.data.salesData);
+        setFilteredSalesData(
+          filterSalesData(res.data.salesData, startDate, endDate)
+        );
       }
     } catch (error) {
       console.error("Error fetching sales data:", error);
       setSalesData([]);
+      setFilteredSalesData([]);
     }
   };
 
@@ -109,34 +131,21 @@ export default function Resultpage() {
 
   //  2. ปรับฟังก์ชันสำหรับดาวน์โหลด Excel เพื่อใช้การกรองวันที่
   const exportToExcel = () => {
-    let filteredData = salesData;
+    let dataToExport = filteredSalesData;
 
-    // ตรวจสอบและกรองตามช่วงวันที่
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      // เพิ่ม 1 วันใน endDate เพื่อให้รวมวันที่สิ้นสุด
-      const end = new Date(endDate);
-      end.setDate(end.getDate() + 1);
-
-      filteredData = salesData.filter((item) => {
-        // item.update_at คือวันที่ในรูปแบบ 'YYYY-MM-DD' จาก backend
-        const itemDate = new Date(item.update_at);
-        if (isNaN(itemDate.getTime())) return false; // ป้องกันข้อมูลเสีย
-
-        // เปรียบเทียบวันที่
-        return itemDate >= start && itemDate < end;
-      });
-
-      if (filteredData.length === 0) {
-        alert("ไม่พบข้อมูลยอดขายในช่วงวันที่ที่เลือก");
-        return;
-      }
-    } else if (startDate || endDate) {
-      alert("กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุดให้ครบถ้วนเพื่อทำการกรอง");
+    if (dataToExport.length === 0 && (startDate || endDate)) {
+      alert("ไม่พบข้อมูลยอดขายในช่วงวันที่ที่เลือก หรือข้อมูลไม่สมบูรณ์");
       return;
     }
 
-    const dataForExport = filteredData.map((item) => ({
+    if (dataToExport.length === 0 && salesData.length > 0) {
+      dataToExport = salesData;
+    } else if (dataToExport.length === 0 && salesData.length === 0) {
+      alert("ไม่พบข้อมูลยอดขายใดๆ ที่จะส่งออก");
+      return;
+    }
+
+    const dataForExport = dataToExport.map((item) => ({
       วันที่: new Date(item.update_at).toLocaleDateString("th-TH"),
       "ยอดขาย (บาท)": item.sales,
     }));
@@ -156,7 +165,6 @@ export default function Resultpage() {
 
     saveAs(data, filename);
   };
-
 
   useEffect(() => {
     if (isAdminOrUser) {
@@ -181,7 +189,32 @@ export default function Resultpage() {
     return () => {};
   }, [isAdminOrUser, guestTablenum]);
 
+  useEffect(() => {
+    // ตรวจสอบว่าเป็นโหมด Admin/User และมีข้อมูล salesData
+    if (isAdminOrUser && salesData.length > 0) {
+      setFilteredSalesData(filterSalesData(salesData, startDate, endDate));
+    } else if (isAdminOrUser && salesData.length === 0) {
+      // กรณีข้อมูลว่าง ให้เคลียร์ filtered data ด้วย
+      setFilteredSalesData([]);
+    }
+  }, [startDate, endDate, salesData, isAdminOrUser]);
+
   const renderChart = () => {
+    const dataForChart = filteredSalesData;
+
+    // ถ้าไม่มีข้อมูลจากการกรองหรือข้อมูลทั้งหมด ให้แสดงข้อความ
+    if (dataForChart.length === 0) {
+      return (
+        <div className="text-center p-5">
+          <p className="h4 text-muted">
+            {!startDate || !endDate
+              ? "กรุณาเลือกช่วงวันที่เพื่อแสดงข้อมูล"
+              : "ไม่พบข้อมูลยอดขายในช่วงวันที่ที่เลือก"}
+          </p>
+          <small className="text-muted">โปรดตรวจสอบการตั้งค่าวันที่</small>
+        </div>
+      );
+    }
     const isDateMode = salesData[0] && salesData[0].update_at;
 
     const xAxisProps = {
@@ -209,7 +242,7 @@ export default function Resultpage() {
       case "line":
         return (
           <LineChart
-            data={salesData}
+            data={dataForChart}
             margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
           >
             <CartesianGrid stroke="#e0e0e0" strokeDasharray="4 4" />
@@ -247,7 +280,7 @@ export default function Resultpage() {
       case "bar":
         return (
           <BarChart
-            data={salesData}
+            data={dataForChart}
             margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
           >
             <CartesianGrid stroke="#e0e0e0" strokeDasharray="4 4" />
@@ -272,7 +305,7 @@ export default function Resultpage() {
       case "area":
         return (
           <AreaChart
-            data={salesData}
+            data={dataForChart}
             margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
           >
             <CartesianGrid stroke="#e0e0e0" strokeDasharray="4 4" />
@@ -310,12 +343,12 @@ export default function Resultpage() {
     }
   };
 
-  // function แปลงสถานะจากอังกฤษเป็นไทย 
+  // function แปลงสถานะจากอังกฤษเป็นไทย
   const getThaiStatus = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
         return "กำลังทำอาหาร";
-      case "completed":
+      case "done":
         return "เสร็จสิ้น";
       default:
         return status;
@@ -585,7 +618,15 @@ export default function Resultpage() {
               marginRight: "5px",
             }}
           />
-          <span style={{ margin: "0 5px", fontWeight: 500 , fontFamily:"'Kanit', sans-serif"}}>ถึง</span>
+          <span
+            style={{
+              margin: "0 5px",
+              fontWeight: 500,
+              fontFamily: "'Kanit', sans-serif",
+            }}
+          >
+            ถึง
+          </span>
           <label
             style={{
               marginRight: "10px",

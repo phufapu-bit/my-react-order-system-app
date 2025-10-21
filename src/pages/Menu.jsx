@@ -76,6 +76,12 @@ export default function Menupage() {
     setIsEditing(true);
   };
 
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setMenuname("");
+    setPrice("");
+  };
+
   // ฟังก์ชันการแก้ไข
   const handleUpdate = async () => {
     Swal.fire({
@@ -222,15 +228,24 @@ export default function Menupage() {
                   min="0"
                 />
               </div>
-              <div className="col-md-2">
+              <div className="col-md-2 d-flex gap-3">
                 {isEditing ? (
-                  <button
-                    style={{ fontSize: "20px" }}
-                    className="btn btn-warning w-100"
-                    onClick={handleUpdate}
-                  >
-                    อัปเดตเมนู
-                  </button>
+                  <>
+                    <button
+                      style={{ fontSize: "20px" }}
+                      className="btn btn-warning w-50"
+                      onClick={handleUpdate}
+                    >
+                      อัปเดตเมนู
+                    </button>
+                    <button
+                      style={{ fontSize: "20px" }}
+                      className="btn btn-secondary w-50"
+                      onClick={handleCancelEdit}
+                    >
+                      ยกเลิก
+                    </button>
+                  </>
                 ) : (
                   <button
                     style={{ fontSize: "20px" }}

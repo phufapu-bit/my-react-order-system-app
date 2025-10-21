@@ -8,11 +8,13 @@ import "../App.css";
 export default function EditUserpage() {
   const [editName, setEditName] = useState("");
   const [editPassword, setEditPassword] = useState("");
-
-  const [users, setUsers] = useState([]);
-
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [editRole, setEditRole] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
 
   const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
 
@@ -43,9 +45,70 @@ export default function EditUserpage() {
     }
   };
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    // ตรวจสอบข้อมูลให้ครบถ้วน
+    if (!name || !password || !role) {
+      return Swal.fire({
+        icon: "warning",
+        title: "กรอกข้อมูลให้ครบ",
+      });
+    }
+    // `${API_URL}/register`
+    // "http://localhost:3001/api/register"
+    try {
+      const response = await axios.post(`${API_URL}/register`, {
+        name,
+        password,
+        role: role.value,
+      });
+
+      if (response.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "ลงทะเบียนสำเร็จ!",
+          timer: 2000,
+          showConfirmButton: false,
+        }).then(() => {
+          // ล้างฟอร์มและปิด Modal
+          closeAddModal();
+          setName("");
+          setPassword("");
+          setRole(null);
+          getuser(); // โหลดข้อมูลผู้ใช้ใหม่
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "ลงทะเบียนล้มเหลว",
+          text: response.data.message,
+        });
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "ไม่สามารถเชื่อมต่อ Server ได้";
+      Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: errorMessage,
+      });
+    }
+  };
+
   useEffect(() => {
     getuser();
   }, []);
+
+  // --- ฟังก์ชันสำหรับจัดการการเพิ่ม Modal (Bootstrap JS) ---
+  const closeAddModal = () => {
+    const modalElement = document.getElementById("addUserModal");
+    const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+    // ไม่ต้อง setAdduser(null) เพราะตอนนี้ใช้ state name, password, role ควบคุมฟอร์ม
+    // แต่ควรล้างค่าฟอร์มด้วย setName(""), setPassword(""), setRole(null) หลังการลงทะเบียน
+  };
 
   // --- ฟังก์ชันสำหรับจัดการการแก้ไข Modal ---
   const closeEditModal = () => {
@@ -70,6 +133,23 @@ export default function EditUserpage() {
     //แสดง Modal ผ่าน Bootstrap JS
     setTimeout(() => {
       const modalElement = document.getElementById("editUserModal");
+      let modalInstance = window.bootstrap.Modal.getInstance(modalElement);
+      if (!modalInstance) {
+        modalInstance = new window.bootstrap.Modal(modalElement);
+      }
+      modalInstance.show();
+    }, 100);
+  };
+
+  const handleAdd = () => {
+    // ล้างค่าฟอร์มก่อนเปิด
+    setName("");
+    setPassword("");
+    setRole(null);
+
+    // แสดง Modal ผ่าน Bootstrap JS
+    setTimeout(() => {
+      const modalElement = document.getElementById("addUserModal");
       let modalInstance = window.bootstrap.Modal.getInstance(modalElement);
       if (!modalInstance) {
         modalInstance = new window.bootstrap.Modal(modalElement);
@@ -135,9 +215,7 @@ export default function EditUserpage() {
         try {
           // `${API_URL}/deleteuser/${id}`
           // `http://localhost:3001/api/deleteuser/${id}`
-          const res = await axios.delete(
-            `${API_URL}/deleteuser/${id}`
-          );
+          const res = await axios.delete(`${API_URL}/deleteuser/${id}`);
           if (res.data.success) {
             Swal.fire("ลบสำเร็จ!", res.data.message, "success");
             getuser();
@@ -187,16 +265,19 @@ export default function EditUserpage() {
           className="card-body"
           style={{ fontFamily: "'Kanit', sans-serif" }}
         >
+          <button
+            className="btn btn-success w-100 my-2"
+            onClick={handleAdd} // แก้ไขเป็น handleAdd
+            style={{ fontSize: "20px" }}
+          >
+            เพิ่มผู้ใช้งาน
+          </button>
           <div className="table-container">
-            <table
-              className="table table-bordered table-striped"
-              style={{ fontSize: "20px" }}
-            >
-              <thead className="table">
+            <table className="table table-bordered table-striped">
+              <thead className="table" style={{ fontSize: "20px" }}>
                 <tr>
                   <th>ชื่อ</th>
                   <th>บทบาท</th>
-                  <th>รหัสผ่าน</th>
                   <th>การจัดการ</th>
                 </tr>
               </thead>
@@ -208,15 +289,6 @@ export default function EditUserpage() {
                       <td>{val.name}</td>
                       <td>
                         {val.role === "admin" ? "ผู้ดูแลระบบ" : "พนักงาน"}
-                      </td>
-                      <td
-                        style={{
-                          fontSize: "14px",
-                          maxWidth: "200px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {val.password}
                       </td>
                       <td>
                         <div className="d-flex gap-2">
@@ -238,7 +310,7 @@ export default function EditUserpage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center">
+                    <td colSpan="3" className="text-center">
                       ไม่มีข้อมูล
                     </td>
                   </tr>
@@ -316,31 +388,31 @@ export default function EditUserpage() {
                     styles={{
                       control: (base) => ({
                         ...base,
-                        fontSize: "16px", // ปรับสีตัวหนังสือพื้นฐานของ control
-                        color: "#333", // สีเทาเข้ม
+                        fontSize: "16px",
+                        color: "#333",
                       }),
                       singleValue: (base) => ({
-                        ...base, // ✅ ทำให้ตัวหนังสือของค่าที่เลือกเข้มขึ้น
-                        color: "#333", // สีเทาเข้ม
-                        fontWeight: "500", // เพิ่มความหนา
-                        fontSize: "18px", // เพิ่มขนาดเล็กน้อยให้ดูเด่น
+                        ...base,
+                        color: "#333",
+                        fontWeight: "500",
+                        fontSize: "18px",
                       }),
                       placeholder: (base) => ({
-                        ...base, // ✅ ทำให้ตัวหนังสือ placeholder เข้มขึ้น
-                        color: "#666", // สีเทาปานกลาง
-                        fontSize: "18px", // เพิ่มขนาดเล็กน้อย
+                        ...base,
+                        color: "#666",
+                        fontSize: "16px",
                       }),
                       option: (base, state) => ({
-                        ...base, // ✅ สีตัวหนังสือในตัวเลือก
-                        color: "#333", // สีเทาเข้ม
-                        fontSize: "16px", // ปรับสีพื้นหลังเมื่อ Hover หรือ Selected
+                        ...base,
+                        color: "#333",
+                        fontSize: "16px",
                         backgroundColor: state.isSelected
                           ? "#e0e0e0"
                           : state.isFocused
                           ? "#f0f0f0"
                           : null,
                       }),
-                      // หากต้องการให้ Dropdown แสดงผลอยู่ด้านหน้าเสมอ (แก้ปัญหาเรื่อง z-index)
+
                       menu: (base) => ({ ...base, zIndex: 2000 }),
                     }}
                   />
@@ -357,6 +429,155 @@ export default function EditUserpage() {
                 </button>
                 <button type="submit" className="btn btn-success">
                   บันทึกการแก้ไข
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL สำหรับเพิ่มผู้ใช้ (แก้ไข Input และผูก Function แล้ว) */}
+      <div
+        className="modal"
+        id="addUserModal"
+        tabIndex="-1"
+        aria-labelledby="addUserModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-success text-white">
+              <h5
+                className="modal-title"
+                id="addUserModalLabel"
+                style={{ fontWeight: "600" }}
+              >
+                เพิ่มผู้ใช้ใหม่
+              </h5>
+              <button
+                type="button"
+                className="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                onClick={closeAddModal}
+              ></button>
+            </div>
+            {/* ผูกกับ handleRegister สำหรับการเพิ่ม */}
+            <form onSubmit={handleRegister}>
+              <div
+                className="modal-body"
+                style={{ fontFamily: "'Kanit', sans-serif" }}
+              >
+                {/* 1. ชื่อผู้ใช้ */}
+                <div className="mb-3">
+                  <label className="form-label text-dark fw-bold">
+                    ชื่อผู้ใช้
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={name}
+                    onChange={(e) => setName(e.target.value.toUpperCase())}
+                    placeholder="กรอกชื่อผู้ใช้"
+                    required
+                  />
+                </div>
+                {/* 2. รหัสผ่าน (เพิ่มเข้ามา) */}
+                <div className="mb-3">
+                  <label className="form-label text-dark fw-bold">
+                    รหัสผ่าน
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      className="form-control"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="กรอกรหัสผ่าน"
+                      required
+                      style={{ paddingRight: "40px" }}
+                    />
+                    {password && (
+                      <button
+                        className=" btn-outline-secondary"
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: "absolute",
+                          right: "10px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: 0,
+                          zIndex: 10,
+                        }}
+                      >
+                        <i
+                          className={
+                            showPassword
+                              ? "bi bi-eye-slash text-secondary"
+                              : "bi bi-eye text-secondary"
+                          }
+                        ></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {/* 3. บทบาท */}
+                <div className="mb-3">
+                  <label className="form-label text-dark fw-bold">บทบาท</label>
+                  <Select
+                    options={roleOptions}
+                    //  แก้ไข: ใช้ role และ setRole
+                    value={role}
+                    onChange={setRole}
+                    placeholder="เลือกบทบาท"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "16px",
+                        color: "#333",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        color: "#333",
+                        fontWeight: "500",
+                        fontSize: "16px",
+                      }),
+                      placeholder: (base) => ({
+                        ...base,
+                        color: "#666",
+                        fontSize: "16px",
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        color: "#333",
+                        fontSize: "16px",
+                        backgroundColor: state.isSelected
+                          ? "#e0e0e0"
+                          : state.isFocused
+                          ? "#f0f0f0"
+                          : null,
+                      }),
+                      menu: (base) => ({ ...base, zIndex: 2000 }),
+                    }}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  data-bs-dismiss="modal"
+                  onClick={closeAddModal}
+                >
+                  ยกเลิก
+                </button>
+                <button type="submit" className="btn btn-success">
+                  ตกลง
                 </button>
               </div>
             </form>

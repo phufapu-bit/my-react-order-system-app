@@ -30,7 +30,7 @@ function MainApp() {
       {/* Sidebar ถูกแยกออกจาก div หลักเพื่อให้อยู่ในตำแหน่ง fixed/absolute */}
       {!isLoginPage && <Sidebar isOpen={sidebarOpen} />}
 
-      {/* 🟢 Container หลัก: จัดการ Layout Flexbox */}
+      {/*Container หลัก: จัดการ Layout Flexbox */}
       <div
         style={{
           marginLeft: contentMargin,
