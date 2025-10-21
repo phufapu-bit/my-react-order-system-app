@@ -279,8 +279,9 @@ export default function Menupage() {
                 style={{ position: "sticky", zIndex: "1000", top: "0" }}
               >
                 <tr>
-                  <th>ชื่อเมนู</th>
-                  <th>ราคา</th>
+                  <th style={{ width: "350px" }}>ชื่อเมนู</th>
+                  <th style={{ width: "150px" }}>ราคา</th>
+                  <th style={{ width: "200px" }}>วันที่/เวลา</th>
                   <th>การจัดการ</th>
                 </tr>
               </thead>
@@ -290,6 +291,18 @@ export default function Menupage() {
                     <tr key={menu.id || i}>
                       <td>{menu.ordername}</td>
                       <td>{menu.price} บาท</td>
+                      <td>
+                        {menu.update_at
+                          ? new Date(menu.update_at).toLocaleString("th-TH", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })
+                          : ""}
+                      </td>
                       <td>
                         <div className="d-flex gap-2">
                           <button
