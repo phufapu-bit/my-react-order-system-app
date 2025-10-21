@@ -228,7 +228,9 @@ app.patch("/api/updateProfileByAdmin/:name", async (req, res) => {
     }
 
     // รวม SQL Query และทำการอัปเดต
-    const sql = `UPDATE test.user SET ${updates.join(", ")} WHERE name = ?`;
+    const sql = `UPDATE test.user SET ${updates.join(
+      ", "
+    )}, update_at = CURRENT_TIMESTAMP() WHERE name = ?`;
 
     // หากมีการเปลี่ยนชื่อผู้ใช้ ต้องใช้ชื่อเดิม (oldName) ในการค้นหา
     // แต่ถ้าเปลี่ยนชื่อ, อัปเดต name = ? จะถูกเพิ่มเข้าไปใน params ก่อนแล้ว
@@ -394,6 +396,10 @@ app.post("/api/register", async (req, res) => {
   }
 
   try {
+    const [maxIdResult] = await db.query(
+      "SELECT MAX(id) AS max_id FROM test.user"
+    );
+    const newId = (maxIdResult[0].max_id || 0) + 1;
     const checkSql = "SELECT name FROM test.user WHERE name = ?";
     const [existingUsers] = await db.query(checkSql, [name]);
 
@@ -404,14 +410,19 @@ app.post("/api/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-
     const insertSql =
-      "INSERT INTO test.user (name, password, role) VALUES (?, ?, ?)";
-    await db.query(insertSql, [name, hashedPassword, role]);
+      "INSERT INTO test.user (id, name, password, role, create_at, update_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())";
+    const [results] = await db.query(insertSql, [
+      newId,
+      name, 
+      hashedPassword, 
+      role
+    ]);
 
     res.json({
       success: true,
       message: "ลงทะเบียนสำเร็จ!",
+      userID: newId,
     });
   } catch (error) {
     console.error("❌ Registration error:", error);
@@ -668,7 +679,7 @@ app.patch("/api/doneOrder", async (req, res) => {
     // --- 1. อัปเดตสถานะออเดอร์ที่ส่งมา ---
     const updateSql = `
             UPDATE listorder 
-            SET status = 'done', update_status = CURRENT_TIMESTAMP() 
+            SET status = 'done', update_status = CURRENT_TIMESTAMP()
             WHERE id = ?;
         `;
     const [updateResult] = await db.query(updateSql, [id]);
@@ -764,7 +775,7 @@ app.patch("/api/updateOrder", async (req, res) => {
   }
   try {
     const sql =
-      "UPDATE test.listorder SET tablenum = ?, listorder = ?, qty = ?, price = ?, total_price = ? WHERE id = ?";
+      "UPDATE test.listorder SET tablenum = ?, listorder = ?, qty = ?, price = ?, total_price = ?, update_at = CURRENT_TIMESTAMP() WHERE id = ?";
     const [results] = await db.query(sql, [
       tablenum,
       listorder,
@@ -897,7 +908,7 @@ app.post("/api/addmenu", async (req, res) => {
     const newId = (maxIdResult[0].max_id || 0) + 1;
 
     const sql =
-      "INSERT INTO test.masterorder (id, ordername, price) VALUES (?, ?, ?)";
+      "INSERT INTO test.masterorder (id, ordername, price, create_at, update_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())";
     const [results] = await db.query(sql, [newId, menuname, price]);
     res.json({
       success: true,
@@ -944,7 +955,7 @@ app.patch("/api/updatemenu", async (req, res) => {
   }
   try {
     const sql =
-      "UPDATE test.masterorder SET ordername = ?, price = ? WHERE id = ?";
+      "UPDATE test.masterorder SET ordername = ?, price = ?, update_at = CURRENT_TIMESTAMP() WHERE id = ?";
     const [results] = await db.query(sql, [menuname, price, id]);
     if (results.affectedRows > 0) {
       res.json({ success: true, message: "Update menu successfully" });
@@ -1307,7 +1318,7 @@ app.patch("/api/completeTableOrders", async (req, res) => {
                 AND status != 'completed';
         `;
 
-    // 💡 หมายเหตุ: ใช้ db.execute สำหรับ mysql2/promise หรือ client.query สำหรับ pg
+    //หมายเหตุ: ใช้ db.execute สำหรับ mysql2/promise หรือ client.query สำหรับ pg
     const [result] = await db.execute(updateQuery, [tablenum]);
 
     // 3. ตรวจสอบผลลัพธ์
