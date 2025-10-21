@@ -491,7 +491,7 @@ export default function Orderpage() {
     });
   };
 
-  const handlePaymentAndComplete = async (id) => {
+  const handlePaymentAndComplete = async (tablenum) => {
     Swal.fire({
       title: `รับชำระเงินโต๊ะ/ออเดอร์ ${tablenum} ใช่หรือไม่?`,
       text: "รายการทั้งหมดของชุดนี้จะถูกบันทึกเป็นยอดขาย",
