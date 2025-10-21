@@ -699,11 +699,11 @@ export default function Orderpage() {
       {(ROLE === "admin" || ROLE === "user") && tablesToPay.length > 0 && (
         <div className="alert alert-warning shadow-sm mt-3 p-3">
           <h4 className="alert-heading">
-            <i className="fas fa-money-bill-wave me-2"></i>{" "}
+            <i className="fas fa-money-bill-wave me-2"></i>
             ออเดอร์ที่รอลูกค้าชำระเงิน
           </h4>
           <p>
-            มีโต๊ะ/ออเดอร์ที่ยังไม่ชำระเงินทั้งหมด:{" "}
+            มีโต๊ะ/ออเดอร์ที่ยังไม่ชำระเงินทั้งหมด:
             <strong>{tablesToPay.length}</strong> รายการ
           </p>
           <hr />
@@ -1130,8 +1130,8 @@ export default function Orderpage() {
                           <td>{order.price || "N/A"}</td>
                           <td>{order.total_price || 0}</td>
                           <td>
-                            {order.update_at
-                              ? new Date(order.update_at).toLocaleString(
+                            {order.update_status
+                              ? new Date(order.update_status).toLocaleString(
                                   "th-TH",
                                   {
                                     year: "numeric",
