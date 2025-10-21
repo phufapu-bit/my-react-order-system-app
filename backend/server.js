@@ -27,7 +27,7 @@ const db = mysql.createPool({
   ssl: {
     rejectUnauthorized: true,
   }, // ระบุชื่อ Database/Schema ที่ถูกต้อง
-  database: "test", 
+  database: "test",
 });
 
 // Start the server only after a successful database connection
@@ -504,9 +504,8 @@ app.post("/api/order", async (req, res) => {
       "SELECT MAX(id) AS max_id FROM test.listorder"
     );
     const newId = (maxIdResult[0].max_id || 0) + 1; // 2. แก้ไข SQL Query: เพิ่ม 'id' ในคอลัมน์ และเพิ่ม '?' สำหรับค่า id ใหม่
-
     const sql =
-      "INSERT INTO test.listorder (id, tablenum, listorder, qty, price, total_price, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')"; // 3. แก้ไข Array ของค่า: เพิ่ม newId เป็นค่าแรก
+      "INSERT INTO test.listorder (id, tablenum, listorder, qty, price, total_price, status,update_status,create_at,update_at) VALUES (?, ?, ?, ?, ?, ?, 'pending',CURRENT_TIMESTAMP(),NOW(),CURRENT_TIMESTAMP())"; // 3. แก้ไข Array ของค่า: เพิ่ม newId เป็นค่าแรก
     const [results] = await db.query(sql, [
       newId, // <--- เพิ่มค่า ID ใหม่ที่คำนวณได้
       tablenum,
@@ -602,8 +601,8 @@ app.patch("/api/completeOrder", async (req, res) => {
 //   try {
 //     // --- 1. อัปเดตสถานะออเดอร์ที่ส่งมา ---
 //     const updateSql = `
-//             UPDATE listorder 
-//             SET status = 'completed', update_status = CURRENT_TIMESTAMP() 
+//             UPDATE listorder
+//             SET status = 'completed', update_status = CURRENT_TIMESTAMP()
 //             WHERE id = ?;
 //         `;
 //     const [updateResult] = await db.query(updateSql, [id]);
@@ -633,8 +632,8 @@ app.patch("/api/completeOrder", async (req, res) => {
 
 //     // --- 3. ตรวจสอบออเดอร์ที่เหลือของโต๊ะนั้น ---
 //     const checkRemainingSql = `
-//             SELECT COUNT(id) AS remainingOrders 
-//             FROM listorder 
+//             SELECT COUNT(id) AS remainingOrders
+//             FROM listorder
 //             WHERE tablenum = ? AND status != 'completed' ;
 //         `;
 //     // *หมายเหตุ: ผมเพิ่ม status != 'paid' เข้ามาเผื่อว่าออเดอร์นั้นถูก mark ว่า Paid แล้ว แต่ยังไม่เสร็จสิ้น*
@@ -1115,7 +1114,7 @@ app.post("/api/getSalesSummary", async (req, res) => {
 //     // 1. ยอดขายรวมตลอดกาล (Total Sales)
 //     const sqlTotalSales = `
 //             SELECT SUM(total_price) AS total_sales
-//             FROM testdb.listorder 
+//             FROM testdb.listorder
 //             WHERE status = 'completed';
 //         `;
 
@@ -1123,14 +1122,14 @@ app.post("/api/getSalesSummary", async (req, res) => {
 //     const sqlTodayOrdersCount = `
 //             SELECT COUNT(id) AS today_orders_count
 //             FROM testdb.listorder
-//             WHERE status = 'completed' 
+//             WHERE status = 'completed'
 //             AND DATE(update_status) = CURDATE();
 //         `;
 
 //     // 3. **✅ ยอดขายรวมวันนี้ (Today's Sales Amount)**
 //     const sqlTodaySalesAmount = `
 //             SELECT SUM(total_price) AS today_sales_amount
-//             FROM testdb.listorder 
+//             FROM testdb.listorder
 //             WHERE status = 'completed'
 //             AND DATE(update_status) = CURDATE();
 //         `;
@@ -1205,15 +1204,15 @@ app.post("/api/getDailySales", async (req, res) => {
 //   try {
 //     // 🟢 แก้ไข SQL เพื่อดึงยอดขายแบบรวมตาม 'วันที่' ที่แท้จริง (ตัดเวลาออก)
 //     const sql = `
-//         SELECT 
-//             DATE_FORMAT(update_status, '%Y-%m-%d') AS day, 
+//         SELECT
+//             DATE_FORMAT(update_status, '%Y-%m-%d') AS day,
 //             SUM(total_price) AS sales,
-//             NULL AS day_order 
-//         FROM testdb.listorder 
-//         WHERE 
+//             NULL AS day_order
+//         FROM testdb.listorder
+//         WHERE
 //             status = 'completed'
 //         GROUP BY day
-//         ORDER BY day; 
+//         ORDER BY day;
 //     `;
 
 //     const [results] = await db.query(sql);
@@ -1235,26 +1234,31 @@ app.post("/api/getDailySales", async (req, res) => {
 
 ///////////////////TiDB data base////////////////////
 app.get("/api/guestOrders", async (req, res) => {
-    // 1. ดึงหมายเลขโต๊ะจาก Query Parameter
-    const tablenum = req.query.tablenum;
+  // 1. ดึงหมายเลขโต๊ะจาก Query Parameter
+  const tablenum = req.query.tablenum;
 
-    if (!tablenum) {
-        return res.status(400).json({ success: false, message: "Table number is missing." });
-    }
+  if (!tablenum) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Table number is missing." });
+  }
 
-    try {
-        const sql =
-            "SELECT * FROM test.listorder WHERE tablenum = ? AND status != 'completed' ORDER BY create_at DESC";
+  try {
+    const sql =
+      "SELECT * FROM test.listorder WHERE tablenum = ? AND status != 'completed' ORDER BY create_at DESC";
 
-        // db.query คือ function ที่คุณใช้เชื่อมต่อฐานข้อมูล
-        const [results] = await db.query(sql, [tablenum]);
+    // db.query คือ function ที่คุณใช้เชื่อมต่อฐานข้อมูล
+    const [results] = await db.query(sql, [tablenum]);
 
-        res.json({ success: true, data: results });
-    } catch (err) {
-        console.error("❌ Guest Order Query Error:", err);
-        // ส่ง HTTP 500 กลับไปหากมีข้อผิดพลาดฐานข้อมูล
-        res.status(500).json({ success: false, message: "Internal Server Error during data retrieval." });
-    }
+    res.json({ success: true, data: results });
+  } catch (err) {
+    console.error("❌ Guest Order Query Error:", err);
+    // ส่ง HTTP 500 กลับไปหากมีข้อผิดพลาดฐานข้อมูล
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error during data retrieval.",
+    });
+  }
 });
 
 /////////////////////////local host///////////////////////////
