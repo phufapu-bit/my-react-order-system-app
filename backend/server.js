@@ -662,6 +662,72 @@ app.patch("/api/completeOrder", async (req, res) => {
 //   }
 // });
 
+app.patch("/api/doneOrder", async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    // --- 1. อัปเดตสถานะออเดอร์ที่ส่งมา ---
+    const updateSql = `
+            UPDATE listorder 
+            SET status = 'done', update_status = CURRENT_TIMESTAMP() 
+            WHERE id = ?;
+        `;
+    const [updateResult] = await db.query(updateSql, [id]);
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "ไม่พบออเดอร์ หรือออเดอร์เสร็จสิ้นไปแล้ว",
+      });
+    }
+
+    // --- 2. ดึงหมายเลขโต๊ะ (tablenum) ของออเดอร์ที่เพิ่งอัปเดต ---
+    const getTablenumSql = `
+            SELECT tablenum FROM listorder WHERE id = ?;
+        `;
+    const [tablenumRows] = await db.query(getTablenumSql, [id]);
+
+    if (tablenumRows.length === 0) {
+      // ไม่ควรเกิดขึ้น แต่เพื่อความปลอดภัย
+      return res.json({
+        success: true,
+        message: "ออเดอร์เสร็จสิ้นแล้ว แต่ไม่พบโต๊ะ",
+      });
+    }
+
+    const tablenum = tablenumRows[0].tablenum;
+
+    // --- 3. ตรวจสอบออเดอร์ที่เหลือของโต๊ะนั้น ---
+    const checkRemainingSql = `
+            SELECT COUNT(id) AS remainingOrders 
+            FROM listorder 
+            WHERE tablenum = ? AND status = 'pending' ;
+        `;
+    // *หมายเหตุ: ผมเพิ่ม status != 'paid' เข้ามาเผื่อว่าออเดอร์นั้นถูก mark ว่า Paid แล้ว แต่ยังไม่เสร็จสิ้น*
+    // *ถ้า Logic การเก็บข้อมูลของคุณใช้แค่ 'completed' ก็สามารถตัดออกได้*
+
+    const [remainingRows] = await db.query(checkRemainingSql, [tablenum]);
+    const remainingCount = remainingRows[0].remainingOrders;
+
+    let clearGuestSession = false;
+    if (remainingCount === 0) {
+      // 4. ถ้าไม่มีออเดอร์ที่รอทำแล้ว ให้ตั้งค่าล้าง Session
+      clearGuestSession = true;
+    }
+
+    // ส่งผลลัพธ์กลับไปให้ Frontend
+    res.json({
+      success: true,
+      message: "ออเดอร์เสร็จสิ้นและบันทึกยอดขายแล้ว",
+      tablenum: tablenum, // ส่งหมายเลขโต๊ะกลับไปด้วย
+      clearGuestSession: clearGuestSession, // ส่งค่านี้กลับไปให้ Frontend ทำการลบ localStorage
+    });
+  } catch (err) {
+    console.error("❌ Error completing order:", err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
+});
+
 //---
 //////////////////////TiDB data base//////////////////
 app.post("/api/getorder", async (req, res) => {
@@ -1217,3 +1283,49 @@ app.get("/api/guestOrders", async (req, res) => {
 //     });
 //   }
 // });
+
+app.patch("/api/completeTableOrders", async (req, res) => {
+  const { tablenum } = req.body;
+  if (!tablenum) {
+    return res.status(400).json({
+      success: false,
+      message: "ต้องระบุหมายเลขโต๊ะ เพื่อปิดยอด",
+    });
+  }
+  try {
+    const updateQuery = `
+            UPDATE listorder
+            SET 
+                status = 'completed',
+                update_status = CURRENT_TIMESTAMP() 
+            WHERE 
+                tablenum = ? 
+                AND status != 'completed';
+        `;
+
+    // 💡 หมายเหตุ: ใช้ db.execute สำหรับ mysql2/promise หรือ client.query สำหรับ pg
+    const [result] = await db.execute(updateQuery, [tablenum]);
+
+    // 3. ตรวจสอบผลลัพธ์
+    if (result.affectedRows === 0) {
+      // ไม่มีการอัปเดตเกิดขึ้น อาจเป็นเพราะไม่มีออเดอร์ที่ค้างชำระ
+      return res.status(200).json({
+        success: false,
+        message: `ไม่พบออเดอร์ค้างชำระสำหรับโต๊ะที่ ${tablenum}`,
+      });
+    }
+
+    // 4. ส่งสถานะความสำเร็จกลับไป Frontend
+    res.json({
+      success: true,
+      message: `ปิดยอดออเดอร์ทั้งหมด ${result.affectedRows} รายการของโต๊ะ ${tablenum} สำเร็จ!`,
+    });
+  } catch (error) {
+    console.error("Error completing table orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "เกิดข้อผิดพลาดภายใน Server ในการปิดยอด",
+      error: error.message,
+    });
+  }
+});
